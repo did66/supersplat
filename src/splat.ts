@@ -24,13 +24,22 @@ import { Element, ElementType } from './element';
 import { Serializer } from './serializer';
 import { vertexShader, fragmentShader, gsplatCenter } from './shaders/splat-shader';
 import { State } from './splat-state';
+/**
+ * Splat（高斯点云）模块
+ * 管理3D高斯点云数据的加载、渲染、编辑和状态管理
+ */
 import { Transform } from './transform';
 import { TransformPalette } from './transform-palette';
 
+// 工作全局变量
 const vec = new Vec3();
 const veca = new Vec3();
 const vecb = new Vec3();
 
+/**
+ * 包围盒点集合
+ * 用于绘制包围盒线框，包含8个角点和对应的缩短点（用于绘制从角点延伸的线）
+ */
 const boundingPoints =
     [-1, 1].map((x) => {
         return [-1, 1].map((y) => {
@@ -44,42 +53,81 @@ const boundingPoints =
         });
     }).flat(3);
 
+/**
+ * Splat（高斯点云）元素类
+ * 表示场景中的一个高斯点云对象，管理其数据、状态、渲染和变换
+ */
 class Splat extends Element {
+    /** 资源资产 */
     asset: Asset;
+    /** Splat数据 */
     splatData: GSplatData;
+    /** Splat数量（不包括已删除的） */
     numSplats = 0;
+    /** 已删除的Splat数量 */
     numDeleted = 0;
+    /** 锁定的Splat数量 */
     numLocked = 0;
+    /** 选中的Splat数量 */
     numSelected = 0;
+    /** Splat实体 */
     entity: Entity;
+    /** 变化计数器（用于检测是否需要重新渲染） */
     changedCounter = 0;
+    /** 状态纹理（存储每个splat的状态：选中、删除、锁定） */
     stateTexture: Texture;
+    /** 变换纹理（存储每个splat的变换矩阵索引） */
     transformTexture: Texture;
+    /** 选中部分包围盒缓存 */
     selectionBoundStorage: BoundingBox;
+    /** 局部空间包围盒缓存 */
     localBoundStorage: BoundingBox;
+    /** 世界空间包围盒缓存 */
     worldBoundStorage: BoundingBox;
+    /** 选中包围盒是否需要重新计算 */
     selectionBoundDirty = true;
+    /** 局部包围盒是否需要重新计算 */
     localBoundDirty = true;
+    /** 世界包围盒是否需要重新计算 */
     worldBoundDirty = true;
+    /** 是否可见 */
     _visible = true;
+    /** 变换调色板（存储变换矩阵） */
     transformPalette: TransformPalette;
 
+    /** 选中时的透明度 */
     selectionAlpha = 1;
 
+    /** 名称 */
     _name = '';
+    /** 色调颜色 */
     _tintClr = new Color(1, 1, 1);
+    /** 色温调整（-1到1） */
     _temperature = 0;
+    /** 饱和度（0到1） */
     _saturation = 1;
+    /** 亮度调整 */
     _brightness = 0;
+    /** 黑点（用于对比度调整） */
     _blackPoint = 0;
+    /** 白点（用于对比度调整） */
     _whitePoint = 1;
+    /** 透明度（0到1） */
     _transparency = 1;
 
+    /** 测量点数组 */
     measurePoints: Vec3[] = [];
+    /** 当前选中的测量点索引 */
     measureSelection = -1;
 
+    /** 重建材质的函数 */
     rebuildMaterial: (bands: number) => void;
 
+    /**
+     * 构造函数
+     * @param asset Splat资源资产
+     * @param orientation 初始旋转（欧拉角）
+     */
     constructor(asset: Asset, orientation: Vec3) {
         super(ElementType.splat);
 
@@ -87,27 +135,34 @@ class Splat extends Element {
         const splatData = splatResource.gsplatData;
         const { device } = splatResource;
 
+        // 从文件名获取名称
         this._name = (asset.file as any).filename;
         this.asset = asset;
         this.splatData = splatData as GSplatData;
         this.numSplats = splatData.numSplats;
 
+        // 创建Splat实体
         this.entity = new Entity('splatEntitiy');
         this.entity.setEulerAngles(orientation);
+        // 添加gsplat组件
         this.entity.addComponent('gsplat', { asset });
 
         const instance = this.entity.gsplat.instance;
 
-        // use custom render order distance calculation for splats
+        // 为splat使用自定义渲染顺序距离计算
+        // 使用包围盒的8个角点来计算最大距离，确保正确的渲染顺序
         instance.meshInstance.calculateSortDistance = (meshInstance: MeshInstance, pos: Vec3, dir: Vec3) => {
             const bound = this.localBound;
             const mat = this.entity.getWorldTransform();
             let maxDist;
+            // 遍历包围盒的8个角点
             for (let i = 0; i < 8; ++i) {
                 vec.x = bound.center.x + bound.halfExtents.x * (i & 1 ? 1 : -1);
                 vec.y = bound.center.y + bound.halfExtents.y * (i & 2 ? 1 : -1);
                 vec.z = bound.center.z + bound.halfExtents.z * (i & 4 ? 1 : -1);
+                // 转换到世界空间
                 mat.transformPoint(vec, vec);
+                // 计算到相机的距离（沿相机方向）
                 const dist = vec.sub(pos).dot(dir);
                 if (i === 0 || dist > maxDist) {
                     maxDist = dist;
@@ -116,10 +171,10 @@ class Splat extends Element {
             return maxDist;
         };
 
-        // added per-splat state channel
-        // bit 1: selected
-        // bit 2: deleted
-        // bit 3: locked
+        // 添加每个splat的状态通道
+        // 位1：选中
+        // 位2：删除
+        // 位3：锁定
         if (!this.splatData.getProp('state')) {
             this.splatData.getElement('vertex').properties.push({
                 type: 'uchar',
@@ -129,7 +184,7 @@ class Splat extends Element {
             });
         }
 
-        // per-splat transform matrix
+        // 每个splat的变换矩阵索引（存储在变换调色板中）
         this.splatData.getElement('vertex').properties.push({
             type: 'ushort',
             name: 'transform',
@@ -161,18 +216,26 @@ class Splat extends Element {
         // create the transform palette
         this.transformPalette = new TransformPalette(device);
 
-        // blend mode for splats
+        // Splat的混合模式（Alpha混合）
         const blendState = new BlendState(true, BLENDEQUATION_ADD, BLENDMODE_ONE, BLENDMODE_ONE_MINUS_SRC_ALPHA);
 
+        /**
+         * 重建材质
+         * 更新着色器和材质参数
+         * @param bands 球谐函数阶数
+         */
         this.rebuildMaterial = (bands: number) => {
             const { material } = instance;
             // material.blendState = blendState;
             const { glsl } = material.shaderChunks;
+            // 设置自定义着色器代码
             glsl.set('gsplatVS', vertexShader);
             glsl.set('gsplatPS', fragmentShader);
             glsl.set('gsplatCenterVS', gsplatCenter);
 
+            // 设置球谐函数阶数
             material.setDefine('SH_BANDS', `${Math.min(bands, (instance.resource as GSplatResource).shBands)}`);
+            // 设置状态和变换纹理
             material.setParameter('splatState', this.stateTexture);
             material.setParameter('splatTransform', this.transformTexture);
             material.update();
@@ -199,14 +262,20 @@ class Splat extends Element {
         this.asset.unload();
     }
 
+    /**
+     * 更新状态
+     * 将状态数据写入GPU纹理，更新统计信息
+     * @param changedState 改变的状态标志（默认选中状态）
+     */
     updateState(changedState = State.selected) {
         const state = this.splatData.getProp('state') as Uint8Array;
 
-        // write state data to gpu texture
+        // 将状态数据写入GPU纹理
         const data = this.stateTexture.lock();
         data.set(state);
         this.stateTexture.unlock();
 
+        // 统计各种状态的splat数量
         let numSelected = 0;
         let numLocked = 0;
         let numDeleted = 0;
@@ -222,29 +291,38 @@ class Splat extends Element {
             }
         }
 
+        // 更新统计信息
         this.numSplats = state.length - numDeleted;
         this.numLocked = numLocked;
         this.numSelected = numSelected;
         this.numDeleted = numDeleted;
 
+        // 标记选中包围盒需要重新计算
         this.makeSelectionBoundDirty();
 
-        // handle splats being added or removed
+        // 处理splat被添加或移除的情况
         if (changedState & State.deleted) {
             this.updateSorting();
         }
 
+        // 强制渲染并触发状态变化事件
         this.scene.forceRender = true;
         this.scene.events.fire('splat.stateChanged', this);
     }
 
+    /**
+     * 更新位置
+     * 重新计算splat位置并更新排序器
+     */
     updatePositions() {
+        // 计算新的位置数据
         const data = this.scene.dataProcessor.calcPositions(this);
 
-        // update the splat centers which are used for render-time sorting
+        // 更新用于渲染时排序的splat中心点
         const state = this.splatData.getProp('state') as Uint8Array;
         const { sorter } = this.entity.gsplat.instance;
         const { centers } = sorter;
+        // 只更新选中splat的中心点
         for (let i = 0; i < this.splatData.numSplats; ++i) {
             if (state[i] === State.selected) {
                 centers[i * 3 + 0] = data[i * 4];
@@ -255,21 +333,28 @@ class Splat extends Element {
 
         this.updateSorting();
 
+        // 强制渲染并触发位置变化事件
         this.scene.forceRender = true;
         this.scene.events.fire('splat.positionsChanged', this);
     }
 
+    /**
+     * 更新排序
+     * 创建映射以移除已删除的splat
+     */
     updateSorting() {
         const state = this.splatData.getProp('state') as Uint8Array;
 
+        // 标记局部包围盒需要重新计算
         this.makeLocalBoundDirty();
 
         let mapping;
 
-        // create a sorter mapping to remove deleted splats
+        // 创建排序器映射以移除已删除的splat
         if (this.numSplats !== state.length) {
             mapping = new Uint32Array(this.numSplats);
             let idx = 0;
+            // 只包含未删除的splat
             for (let i = 0; i < state.length; ++i) {
                 if ((state[i] & State.deleted) === 0) {
                     mapping[idx++] = i;
@@ -277,7 +362,7 @@ class Splat extends Element {
             }
         }
 
-        // update sorting instance
+        // 更新排序器实例
         this.entity.gsplat.instance.sorter.setMapping(mapping);
     }
 
@@ -441,35 +526,47 @@ class Splat extends Element {
         this.scene.boundDirty = true;
     }
 
-    // get the selection bound
+    /**
+     * 获取选中部分的包围盒
+     * 只包含选中splat的包围盒
+     */
     get selectionBound() {
         const selectionBound = this.selectionBoundStorage;
         if (this.selectionBoundDirty) {
+            // 计算选中部分的包围盒
             this.scene.dataProcessor.calcBound(this, selectionBound, true);
             this.selectionBoundDirty = false;
         }
         return selectionBound;
     }
 
-    // get local space bound
+    /**
+     * 获取局部空间包围盒
+     * 包含所有未删除splat的包围盒（局部空间）
+     */
     get localBound() {
         const localBound = this.localBoundStorage;
         if (this.localBoundDirty) {
+            // 计算局部空间包围盒
             this.scene.dataProcessor.calcBound(this, localBound, false);
             this.localBoundDirty = false;
+            // 转换中心点到世界空间（用于调试）
             this.entity.getWorldTransform().transformPoint(localBound.center, vec);
         }
         return localBound;
     }
 
-    // get world space bound
+    /**
+     * 获取世界空间包围盒
+     * 将局部空间包围盒转换到世界空间
+     */
     get worldBound() {
         const worldBound = this.worldBoundStorage;
         if (this.worldBoundDirty) {
-            // calculate meshinstance aabb (transformed local bound)
+            // 计算网格实例的AABB（变换后的局部包围盒）
             worldBound.setFromTransformedAabb(this.localBound, this.entity.getWorldTransform());
 
-            // flag scene bound as dirty
+            // 标记场景包围盒需要重新计算
             this.worldBoundDirty = false;
         }
         return worldBound;
@@ -563,13 +660,21 @@ class Splat extends Element {
         return this._transparency;
     }
 
+    /**
+     * 获取枢轴点（变换中心）
+     * @param mode 模式：'center'使用实体中心，'boundCenter'使用包围盒中心
+     * @param selection 是否使用选中部分的包围盒
+     * @param result 输出的变换对象
+     */
     getPivot(mode: 'center' | 'boundCenter', selection: boolean, result: Transform) {
         const { entity } = this;
         switch (mode) {
             case 'center':
+                // 使用实体中心
                 result.set(entity.getLocalPosition(), entity.getLocalRotation(), entity.getLocalScale());
                 break;
             case 'boundCenter':
+                // 使用包围盒中心
                 entity.getLocalTransform().transformPoint((selection ? this.selectionBound : this.localBound).center, vec);
                 result.set(vec, entity.getLocalRotation(), entity.getLocalScale());
                 break;

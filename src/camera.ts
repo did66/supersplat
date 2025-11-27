@@ -27,13 +27,22 @@ import {
     WebglGraphicsDevice
 } from 'playcanvas';
 
+/**
+ * 相机模块
+ * 管理场景的相机控制，包括轨道控制、拾取、渲染目标等
+ */
 import { PointerController } from './controllers';
 import { Element, ElementType } from './element';
 import { Serializer } from './serializer';
 import { Splat } from './splat';
 import { TweenValue } from './tween-value';
 
-// calculate the forward vector given azimuth and elevation
+/**
+ * 根据方位角和高程角计算前向向量
+ * @param result 结果向量
+ * @param azim 方位角（度）
+ * @param elev 高程角（度）
+ */
 const calcForwardVec = (result: Vec3, azim: number, elev: number) => {
     const ex = elev * math.DEG_TO_RAD;
     const ey = azim * math.DEG_TO_RAD;
@@ -44,7 +53,7 @@ const calcForwardVec = (result: Vec3, azim: number, elev: number) => {
     result.set(-c1 * s2, s1, c1 * c2);
 };
 
-// work globals
+// 工作全局变量（避免频繁创建临时对象）
 const forwardVec = new Vec3();
 const cameraPosition = new Vec3();
 const plane = new Plane();
@@ -55,48 +64,77 @@ const va = new Vec3();
 const m = new Mat4();
 const v4 = new Vec4();
 
-// modulo dealing with negative numbers
+/**
+ * 处理负数的模运算
+ * @param n 被除数
+ * @param m 除数
+ * @returns 模运算结果
+ */
 const mod = (n: number, m: number) => ((n % m) + m) % m;
 
+/**
+ * 相机元素类
+ * 提供轨道相机控制、拾取、渲染等功能
+ */
 class Camera extends Element {
+    /** 指针控制器，处理鼠标/触摸输入 */
     controller: PointerController;
+    /** 相机实体 */
     entity: Entity;
+    /** 焦点位置补间值（平滑移动） */
     focalPointTween = new TweenValue({ x: 0, y: 0.5, z: 0 });
+    /** 方位角和高程角补间值 */
     azimElevTween = new TweenValue({ azim: 30, elev: -15 });
+    /** 距离补间值 */
     distanceTween = new TweenValue({ distance: 1 });
 
+    /** 最小高程角限制 */
     minElev = -90;
+    /** 最大高程角限制 */
     maxElev = 90;
 
+    /** 场景半径，用于计算相机距离 */
     sceneRadius = 1;
 
+    /** 飞行速度 */
     flySpeed = 5;
 
+    /** 拾取器，用于屏幕坐标到3D对象的拾取 */
     picker: Picker;
 
+    /** 工作渲染目标，用于拾取等操作 */
     workRenderTarget: RenderTarget;
 
-    // overridden target size
+    /** 覆盖的目标尺寸（用于离屏渲染） */
     targetSize: { width: number, height: number } = null;
 
+    /** 是否抑制最终blit（用于离屏渲染） */
     suppressFinalBlit = false;
 
+    /** 是否渲染覆盖层 */
     renderOverlays = true;
 
+    /** 更新相机uniforms的函数 */
     updateCameraUniforms: () => void;
 
+    /**
+     * 构造函数
+     * 创建相机实体并初始化
+     */
     constructor() {
         super(ElementType.camera);
-        // create the camera entity
+        // 创建相机实体
         this.entity = new Entity('Camera');
         this.entity.addComponent('camera');
 
-        // NOTE: this call is needed for refraction effect to work correctly, but
-        // it slows rendering and should only be made when required.
+        // 注意：此调用对于折射效果正常工作是必需的，但会减慢渲染速度
+        // 应该只在需要时调用
         // this.entity.camera.requestSceneColorMap(true);
     }
 
-    // ortho
+    /**
+     * 设置/获取正交投影模式
+     */
     set ortho(value: boolean) {
         if (value !== this.ortho) {
             this.entity.camera.projection = value ? PROJECTION_ORTHOGRAPHIC : PROJECTION_PERSPECTIVE;
@@ -108,7 +146,9 @@ class Camera extends Element {
         return this.entity.camera.projection === PROJECTION_ORTHOGRAPHIC;
     }
 
-    // fov
+    /**
+     * 设置/获取视野角度（FOV）
+     */
     set fov(value: number) {
         this.entity.camera.fov = value;
     }
@@ -117,7 +157,9 @@ class Camera extends Element {
         return this.entity.camera.fov;
     }
 
-    // tonemapping
+    /**
+     * 设置/获取色调映射模式
+     */
     set tonemapping(value: string) {
         const mapping: Record<string, number> = {
             none: TONEMAP_NONE,
@@ -150,7 +192,9 @@ class Camera extends Element {
         return 'none';
     }
 
-    // near clip
+    /**
+     * 设置/获取近裁剪平面距离
+     */
     set near(value: number) {
         this.entity.camera.nearClip = value;
     }
@@ -159,7 +203,9 @@ class Camera extends Element {
         return this.entity.camera.nearClip;
     }
 
-    // far clip
+    /**
+     * 设置/获取远裁剪平面距离
+     */
     set far(value: number) {
         this.entity.camera.farClip = value;
     }
@@ -168,65 +214,95 @@ class Camera extends Element {
         return this.entity.camera.farClip;
     }
 
-    // focal point
+    /**
+     * 获取焦点位置（目标值）
+     */
     get focalPoint() {
         const t = this.focalPointTween.target;
         return new Vec3(t.x, t.y, t.z);
     }
 
-    // azimuth, elevation
+    /**
+     * 获取方位角和高程角（目标值）
+     */
     get azimElev() {
         return this.azimElevTween.target;
     }
 
+    /** 获取方位角 */
     get azim() {
         return this.azimElev.azim;
     }
 
+    /** 获取高程角 */
     get elevation() {
         return this.azimElev.elev;
     }
 
+    /** 获取相机距离（目标值） */
     get distance() {
         return this.distanceTween.target.distance;
     }
 
+    /**
+     * 设置焦点位置
+     * @param point 目标焦点位置
+     * @param dampingFactorFactor 阻尼因子倍数（1为正常速度）
+     */
     setFocalPoint(point: Vec3, dampingFactorFactor: number = 1) {
         this.focalPointTween.goto(point, dampingFactorFactor * this.scene.config.controls.dampingFactor);
     }
 
+    /**
+     * 设置方位角和高程角
+     * @param azim 方位角（度）
+     * @param elev 高程角（度）
+     * @param dampingFactorFactor 阻尼因子倍数
+     */
     setAzimElev(azim: number, elev: number, dampingFactorFactor: number = 1) {
-        // clamp
+        // 限制范围
         azim = mod(azim, 360);
         elev = Math.max(this.minElev, Math.min(this.maxElev, elev));
 
         const t = this.azimElevTween;
         t.goto({ azim, elev }, dampingFactorFactor * this.scene.config.controls.dampingFactor);
 
-        // handle wraparound
+        // 处理环绕（避免从359度到1度时的大幅旋转）
         if (t.source.azim - azim < -180) {
             t.source.azim += 360;
         } else if (t.source.azim - azim > 180) {
             t.source.azim -= 360;
         }
 
-        // return to perspective mode on rotation
+        // 旋转时返回到透视模式
         this.ortho = false;
     }
 
+    /**
+     * 设置相机距离
+     * @param distance 目标距离
+     * @param dampingFactorFactor 阻尼因子倍数
+     */
     setDistance(distance: number, dampingFactorFactor: number = 1) {
         const controls = this.scene.config.controls;
 
-        // clamp
+        // 限制在最小和最大缩放范围内
         distance = Math.max(controls.minZoom, Math.min(controls.maxZoom, distance));
 
         const t = this.distanceTween;
         t.goto({ distance }, dampingFactorFactor * controls.dampingFactor);
     }
 
+    /**
+     * 设置相机姿态（位置和目标）
+     * @param position 相机位置
+     * @param target 目标位置（焦点）
+     * @param dampingFactorFactor 阻尼因子倍数
+     */
     setPose(position: Vec3, target: Vec3, dampingFactorFactor: number = 1) {
         vec.sub2(target, position);
         const l = vec.length();
+        // 计算方位角和高程角
         const azim = Math.atan2(-vec.x / l, -vec.z / l) * math.RAD_TO_DEG;
         const elev = Math.asin(vec.y / l) * math.RAD_TO_DEG;
         this.setFocalPoint(target, dampingFactorFactor);
@@ -234,7 +310,11 @@ class Camera extends Element {
         this.setDistance(l / this.sceneRadius * this.fovFactor, dampingFactorFactor);
     }
 
-    // transform the world space coordinate to normalized screen coordinate
+    /**
+     * 将世界空间坐标转换为归一化屏幕坐标
+     * @param world 世界空间坐标
+     * @param screen 输出的屏幕坐标（归一化，0-1范围）
+     */
     worldToScreen(world: Vec3, screen: Vec3) {
         const { camera } = this.entity.camera;
         m.mul2(camera.projectionMatrix, camera.viewMatrix);
@@ -247,20 +327,28 @@ class Camera extends Element {
         screen.z = v4.z / v4.w;
     }
 
+    /**
+     * 添加到场景
+     * 初始化相机控制器、渲染层、拾取器等
+     */
     add() {
+        // 将相机实体添加到相机根节点
         this.scene.cameraRoot.addChild(this.entity);
+        // 添加相机需要渲染的层
         this.entity.camera.layers = this.entity.camera.layers.concat([
             this.scene.shadowLayer.id,
             this.scene.debugLayer.id,
             this.scene.gizmoLayer.id
         ]);
 
+        // 如果配置了调试渲染，设置调试着色器通道
         if (this.scene.config.camera.debugRender) {
             this.entity.camera.setShaderPass(`debug_${this.scene.config.camera.debugRender}`);
         }
 
         const target = document.getElementById('canvas-container');
 
+        // 创建指针控制器（处理鼠标/触摸输入）
         this.controller = new PointerController(this, target);
 
         // apply scene config
@@ -292,17 +380,18 @@ class Camera extends Element {
         this.setAzimElev(controls.initialAzim, controls.initialElev, 0);
         this.setDistance(controls.initialZoom, 0);
 
-        // picker
+        // 创建拾取器（用于屏幕坐标到3D对象的拾取）
         const { width, height } = this.scene.targetSize;
         this.picker = new Picker(this.scene.app, width, height);
 
-        // override buffer allocation to use our render target
+        // 覆盖缓冲区分配，使用我们的渲染目标
         this.picker.allocateRenderTarget = () => { };
         this.picker.releaseRenderTarget = () => { };
 
+        // 监听场景包围盒变化事件
         this.scene.events.on('scene.boundChanged', this.onBoundChanged, this);
 
-        // prepare camera-specific uniforms
+        // 准备相机特定的uniforms（用于着色器）
         this.updateCameraUniforms = () => {
             const device = this.scene.graphicsDevice;
             const entity = this.entity;
@@ -312,27 +401,28 @@ class Camera extends Element {
                 device.scope.resolve(name).setValue([vec.x, vec.y, vec.z]);
             };
 
-            // get frustum corners in world space
+            // 获取世界空间中的视锥体角点
             const points = camera.camera.getFrustumCorners(-100);
             const worldTransform = entity.getWorldTransform();
+            // 将视锥体角点转换到世界空间
             for (let i = 0; i < points.length; i++) {
                 worldTransform.transformPoint(points[i], points[i]);
             }
 
-            // near
+            // 近平面
             if (camera.projection === PROJECTION_PERSPECTIVE) {
-                // perspective
+                // 透视投影：近平面是点
                 set('near_origin', worldTransform.getTranslation());
                 set('near_x', Vec3.ZERO);
                 set('near_y', Vec3.ZERO);
             } else {
-                // orthographic
+                // 正交投影：近平面是矩形
                 set('near_origin', points[3]);
                 set('near_x', va.sub2(points[0], points[3]));
                 set('near_y', va.sub2(points[2], points[3]));
             }
 
-            // far
+            // 远平面（总是矩形）
             set('far_origin', points[7]);
             set('far_x', va.sub2(points[4], points[7]));
             set('far_y', va.sub2(points[6], points[7]));
@@ -374,12 +464,18 @@ class Camera extends Element {
         this.scene.events.off('scene.boundChanged', this.onBoundChanged, this);
     }
 
-    // handle the scene's bound changing. the camera must be configured to render
-    // the entire extents as well as possible.
-    // also update the existing camera distance to maintain the current view
+    /**
+     * 处理场景包围盒变化
+     * 当场景包围盒改变时，相机必须配置为尽可能渲染整个范围
+     * 同时更新现有相机距离以保持当前视图
+     * @param bound 新的场景包围盒
+     */
     onBoundChanged(bound: BoundingBox) {
+        // 保存之前的距离（世界空间）
         const prevDistance = this.distanceTween.value.distance * this.sceneRadius;
+        // 更新场景半径（包围盒半长）
         this.sceneRadius = Math.max(1e-03, bound.halfExtents.length());
+        // 更新距离以保持相同的视图（立即更新，无补间）
         this.setDistance(prevDistance / this.sceneRadius, 0);
     }
 
@@ -393,7 +489,10 @@ class Camera extends Element {
         );
     }
 
-    // handle the viewer canvas resizing
+    /**
+     * 重建渲染目标
+     * 处理画布尺寸变化，重新创建渲染目标
+     */
     rebuildRenderTargets() {
         const device = this.scene.graphicsDevice;
         const { width, height } = this.targetSize ?? this.scene.targetSize;
@@ -454,11 +553,16 @@ class Camera extends Element {
         this.scene.events.fire('camera.resize', { width, height });
     }
 
+    /**
+     * 更新回调
+     * 更新控制器、补间值，计算相机位置和方向
+     * @param deltaTime 帧时间差（秒）
+     */
     onUpdate(deltaTime: number) {
-        // controller update
+        // 更新控制器
         this.controller.update(deltaTime);
 
-        // update underlying values
+        // 更新底层补间值
         this.focalPointTween.update(deltaTime);
         this.azimElevTween.update(deltaTime);
         this.distanceTween.update(deltaTime);
@@ -466,34 +570,48 @@ class Camera extends Element {
         const azimElev = this.azimElevTween.value;
         const distance = this.distanceTween.value;
 
+        // 计算前向向量
         calcForwardVec(forwardVec, azimElev.azim, azimElev.elev);
+        // 计算相机位置（从焦点沿前向向量后退）
         cameraPosition.copy(forwardVec);
         cameraPosition.mulScalar(distance.distance * this.sceneRadius / this.fovFactor);
         cameraPosition.add(this.focalPointTween.value);
 
+        // 设置相机位置和旋转
         this.entity.setLocalPosition(cameraPosition);
         this.entity.setLocalEulerAngles(azimElev.elev, azimElev.azim, 0);
 
+        // 调整裁剪平面以适应场景
         this.fitClippingPlanes(this.entity.getLocalPosition(), this.entity.forward);
 
+        // 更新正交高度（用于正交投影）
         const { camera } = this.entity;
         camera.orthoHeight = this.distanceTween.value.distance * this.sceneRadius / this.fovFactor * (this.fov / 90) * (camera.horizontalFov ? this.scene.targetSize.height / this.scene.targetSize.width : 1);
+        // 更新视图投影矩阵
         camera.camera._updateViewProjMat();
     }
 
+    /**
+     * 调整裁剪平面以适应场景
+     * 根据场景包围盒和相机位置计算合适的近远裁剪平面
+     * @param cameraPosition 相机位置
+     * @param forwardVec 相机前向向量
+     */
     fitClippingPlanes(cameraPosition: Vec3, forwardVec: Vec3) {
         const bound = this.scene.bound;
         const boundRadius = bound.halfExtents.length();
 
+        // 计算从相机到场景中心的向量
         vec.sub2(bound.center, cameraPosition);
         const dist = vec.dot(forwardVec);
 
         if (dist > 0) {
+            // 场景在相机前方
             this.far = dist + boundRadius;
-            // if camera is placed inside the sphere bound calculate near based far
+            // 如果相机位于包围球内，根据远平面计算近平面
             this.near = Math.max(1e-6, dist < boundRadius ? this.far / (1024 * 16) : dist - boundRadius);
         } else {
-            // if the scene is behind the camera
+            // 场景在相机后方
             this.far = boundRadius * 2;
             this.near = this.far / (1024 * 16);
         }
@@ -566,7 +684,13 @@ class Camera extends Element {
         }
     }
 
-    // intersect the scene at the given screen coordinate
+    /**
+     * 在给定屏幕坐标处与场景相交
+     * 返回最接近相机的交点
+     * @param screenX 屏幕X坐标
+     * @param screenY 屏幕Y坐标
+     * @returns 相交结果，包含splat、位置和距离，如果没有相交则返回null
+     */
     intersect(screenX: number, screenY: number) {
         const { scene } = this;
 
@@ -617,7 +741,11 @@ class Camera extends Element {
         };
     }
 
-    // intersect the scene at the screen location and focus the camera on this location
+    /**
+     * 在屏幕位置与场景相交并将相机焦点设置到此位置
+     * @param screenX 屏幕X坐标
+     * @param screenY 屏幕Y坐标
+     */
     pickFocalPoint(screenX: number, screenY: number) {
         const result = this.intersect(screenX, screenY);
         if (result) {
@@ -633,9 +761,16 @@ class Camera extends Element {
         }
     }
 
-    // pick mode
+    /**
+     * 拾取模式相关方法
+     */
 
-    // render picker contents
+    /**
+     * 准备拾取器渲染
+     * 配置拾取器以渲染指定splat用于拾取
+     * @param splat 要拾取的splat对象
+     * @param op 拾取操作类型：'add'添加、'remove'移除、'set'设置
+     */
     pickPrep(splat: Splat, op: 'add'|'remove'|'set') {
         const { width, height } = this.scene.targetSize;
         const worldLayer = this.scene.app.scene.layers.getLayerByName('World');
@@ -661,10 +796,24 @@ class Camera extends Element {
         });
     }
 
+    /**
+     * 拾取单个像素
+     * @param x 屏幕X坐标
+     * @param y 屏幕Y坐标
+     * @returns 拾取的splat ID，如果没有则返回-1
+     */
     pick(x: number, y: number) {
         return this.pickRect(x, y, 1, 1)[0];
     }
 
+    /**
+     * 拾取矩形区域
+     * @param x 屏幕X坐标
+     * @param y 屏幕Y坐标
+     * @param width 矩形宽度
+     * @param height 矩形高度
+     * @returns 拾取的splat ID数组
+     */
     pickRect(x: number, y: number, width: number, height: number) {
         const device = this.scene.graphicsDevice as WebglGraphicsDevice;
         const pixels = new Uint8Array(width * height * 4);
@@ -709,13 +858,24 @@ class Camera extends Element {
         this.tonemapping = settings.tonemapping;
     }
 
-    // offscreen render mode
+    /**
+     * 离屏渲染模式
+     * 用于导出图像/视频等功能
+     */
 
+    /**
+     * 启动离屏渲染模式
+     * @param width 目标宽度
+     * @param height 目标高度
+     */
     startOffscreenMode(width: number, height: number) {
         this.targetSize = { width, height };
         this.suppressFinalBlit = true;
     }
 
+    /**
+     * 结束离屏渲染模式
+     */
     endOffscreenMode() {
         this.targetSize = null;
         this.suppressFinalBlit = false;

@@ -18,62 +18,102 @@ import {
     BlendState
 } from 'playcanvas';
 
+/**
+ * 数据处理模块
+ * 使用GPU进行Splat数据的处理，包括包围盒计算、位置计算、相交检测等
+ */
 import { vertexShader as boundVS, fragmentShader as boundFS } from './shaders/bound-shader';
 import { vertexShader as intersectionVS, fragmentShader as intersectionFS } from './shaders/intersection-shader';
 import { vertexShader as positionVS, fragmentShader as positionFS } from './shaders/position-shader';
 import { Splat } from './splat';
 
+/** 遮罩选项 */
 type MaskOptions = {
+    /** 遮罩纹理 */
     mask: Texture;
 };
 
+/** 矩形选项 */
 type RectOptions = {
+    /** 矩形区域 {x1, y1, x2, y2} */
     rect: { x1: number, y1: number, x2: number, y2: number };
 };
 
+/** 球体选项 */
 type SphereOptions = {
+    /** 球体参数 {x, y, z, radius} */
     sphere: { x: number, y: number, z: number, radius: number };
 };
 
+/** 盒子选项 */
 type BoxOptions = {
+    /** 盒子参数 {x, y, z, lenx, leny, lenz} */
     box: { x: number, y: number, z: number, lenx: number, leny: number, lenz: number };
 };
 
+// 工作全局变量
 const v1 = new Vec3();
 const v2 = new Vec3();
 
+/**
+ * 解析着色器作用域值
+ * @param {ScopeSpace} scope - 着色器作用域
+ * @param {any} values - 要设置的值对象
+ */
 const resolve = (scope: ScopeSpace, values: any) => {
     for (const key in values) {
         scope.resolve(key).setValue(values[key]);
     }
 };
 
+/** 相交检测资源类型 */
 type IntersectResources = {
+    /** 着色器 */
     shader: Shader;
+    /** 纹理 */
     texture: Texture;
+    /** 渲染目标 */
     renderTarget: RenderTarget;
+    /** 数据数组 */
     data: Uint8Array;
 };
 
+/** 包围盒计算资源类型 */
 type BoundResources = {
+    /** 着色器 */
     shader: Shader;
+    /** 最小值纹理 */
     minTexture: Texture;
+    /** 最大值纹理 */
     maxTexture: Texture;
+    /** 渲染目标 */
     renderTarget: RenderTarget;
+    /** 最小值渲染目标 */
     minRenderTarget: RenderTarget;
+    /** 最大值渲染目标 */
     maxRenderTarget: RenderTarget;
+    /** 最小值数据 */
     minData: Float32Array;
+    /** 最大值数据 */
     maxData: Float32Array;
 };
 
+/** 位置计算资源类型 */
 type PositionResources = {
+    /** 着色器 */
     shader: Shader;
+    /** 纹理 */
     texture: Texture;
+    /** 渲染目标 */
     renderTarget: RenderTarget;
+    /** 位置数据 */
     data: Float32Array;
 };
 
-// gpu processor for splat data
+/**
+ * GPU Splat数据处理器
+ * 使用GPU进行Splat数据的各种计算和处理
+ */
 class DataProcessor {
     device: GraphicsDevice;
     dummyTexture: Texture;
