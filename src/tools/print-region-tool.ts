@@ -196,9 +196,8 @@ class PrintRegionTool {
 		events.on('camera.resize', updateGizmoSize);
 		events.on('camera.ortho', updateGizmoSize);
 
-		// 激活工具
-		this.activate = () => {
-			// 检查是否有选中的模型
+		// 检查是否可以激活工具
+		const canActivate = () => {
 			const selected = events.invoke('selection') as Splat;
 			if (!selected) {
 				// 如果没有选中模型，显示提示弹窗
@@ -207,15 +206,24 @@ class PrintRegionTool {
 					header: '提示',
 					message: '请先选择一个模型'
 				});
-				// 触发工具停用事件，确保工具管理器知道工具没有被激活
-				events.fire('tool.deactivate');
+				return false;
+			}
+			return true;
+		};
+
+		// 激活工具
+		this.activate = () => {
+			// 检查是否有选中的模型
+			if (!canActivate()) {
 				// 不激活工具，直接返回
 				return;
 			}
 
+			const selected = events.invoke('selection') as Splat;
+
 			this.active = true;
 			this.printRegion.enabled = true;
-			
+
 			// 只在第一次激活时添加到场景，避免重复添加
 			if (!this.printRegion.scene) {
 				scene.add(this.printRegion);
@@ -230,14 +238,14 @@ class PrintRegionTool {
 					this.printRegion.lenY = bound.halfExtents.y * 2;
 					this.printRegion.lenZ = bound.halfExtents.z * 2;
 				}
-				
+
 				// 保存初始状态
 				this.initialPosition.copy(this.printRegion.pivot.getPosition());
 				this.initialLenX = this.printRegion.lenX;
 				this.initialLenY = this.printRegion.lenY;
 				this.initialLenZ = this.printRegion.lenZ;
 				this.isInitialized = true;
-				
+
 				// 更新输入框
 				lenX.value = this.printRegion.lenX;
 				lenY.value = this.printRegion.lenY;
@@ -266,6 +274,9 @@ class PrintRegionTool {
 			}
 			return null;
 		});
+
+		// 暴露canActivate方法供工具管理器检查
+		(this as any).canActivate = canActivate;
 	}
 
 	/**
