@@ -1,4 +1,4 @@
-import { path, Quat, Vec3 } from 'playcanvas';
+import { BoundingBox, path, Quat, Vec3 } from 'playcanvas';
 
 import { CreateDropHandler } from './drop-handler';
 import { ElementType } from './element';
@@ -499,6 +499,75 @@ const initFileHandler = (scene: Scene, events: Events, dropTarget: HTMLElement) 
             if (error.name !== 'AbortError') {
                 console.error(error);
             }
+        }
+    });
+
+    // 导出打印区域（直接导出，不显示对话框）
+    events.function('scene.exportPrintRegion', async (printRegion: BoundingBox) => {
+        events.fire('startSpinner');
+
+        try {
+            // setTimeout so spinner has a chance to activate
+            await new Promise<void>((resolve) => {
+                setTimeout(resolve);
+            });
+
+            const splats = getSplats();
+            const hasFilePicker = !!window.showSaveFilePicker;
+
+            // 生成默认文件名
+            const defaultFilename = splats.length > 0 ? `${splats[0].name}_print_region` : 'print_region';
+
+            const serializeSettings: SerializeSettings = {
+                maxSHBands: events.invoke('view.bands') ?? 3,
+                printRegion: printRegion
+            };
+
+            if (hasFilePicker) {
+                try {
+                    // 使用文件选择器获取文件名
+                    const fileHandle = await window.showSaveFilePicker({
+                        id: 'SuperSplatFileExport',
+                        types: [filePickerTypes['ply']],
+                        suggestedName: `${defaultFilename}.ply`
+                    });
+                    
+                    // 从文件名提取基础名称
+                    const filename = fileHandle.name.replace(/\.ply$/, '');
+                    
+                    const stream = await fileHandle.createWritable();
+                    const writer = new FileStreamWriter(stream);
+                    try {
+                        await serializePly(splats, serializeSettings, writer);
+                    } finally {
+                        await writer.close();
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        await events.invoke('showPopup', {
+                            type: 'error',
+                            header: localize('popup.error-loading'),
+                            message: `${error.message ?? error} while saving file`
+                        });
+                    }
+                }
+            } else {
+                // 没有文件选择器时，直接下载
+                const writer = new DownloadWriter(`${defaultFilename}.ply`);
+                try {
+                    await serializePly(splats, serializeSettings, writer);
+                } finally {
+                    await writer.close();
+                }
+            }
+        } catch (error) {
+            await events.invoke('showPopup', {
+                type: 'error',
+                header: localize('popup.error-loading'),
+                message: `${error.message ?? error} while saving file`
+            });
+        } finally {
+            events.fire('stopSpinner');
         }
     });
 

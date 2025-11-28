@@ -79,6 +79,11 @@ class BottomToolbar extends Container {
             class: 'bottom-toolbar-tool'
         });
 
+        const printRegion = new Button({
+            id: 'bottom-toolbar-print-region',
+            class: 'bottom-toolbar-tool'
+        });
+
         // const crop = new Button({
         //     id: 'bottom-toolbar-crop',
         //     class: ['bottom-toolbar-tool', 'disabled']
@@ -128,6 +133,7 @@ class BottomToolbar extends Container {
         flood.dom.appendChild(createSvg(floodSvg));
         sphere.dom.appendChild(createSvg(sphereSvg));
         box.dom.appendChild(createSvg(boxSvg));
+        printRegion.dom.appendChild(createSvg(boxSvg)); // 暂时使用box图标
         lasso.dom.appendChild(createSvg(lassoSvg));
         // crop.dom.appendChild(createSvg(cropSvg));
 
@@ -142,6 +148,7 @@ class BottomToolbar extends Container {
         this.append(new Element({ class: 'bottom-toolbar-separator' }));
         this.append(sphere);
         this.append(box);
+        this.append(printRegion);
         // this.append(crop);
         this.append(new Element({ class: 'bottom-toolbar-separator' }));
         this.append(translate);
@@ -161,6 +168,7 @@ class BottomToolbar extends Container {
         picker.dom.addEventListener('click', () => events.fire('tool.rectSelection'));
         sphere.dom.addEventListener('click', () => events.fire('tool.sphereSelection'));
         box.dom.addEventListener('click', () => events.fire('tool.boxSelection'));
+        printRegion.dom.addEventListener('click', () => events.fire('tool.printRegion'));
         translate.dom.addEventListener('click', () => events.fire('tool.move'));
         rotate.dom.addEventListener('click', () => events.fire('tool.rotate'));
         scale.dom.addEventListener('click', () => events.fire('tool.scale'));
@@ -183,6 +191,7 @@ class BottomToolbar extends Container {
             lasso.class[toolName === 'lassoSelection' ? 'add' : 'remove']('active');
             sphere.class[toolName === 'sphereSelection' ? 'add' : 'remove']('active');
             box.class[toolName === 'boxSelection' ? 'add' : 'remove']('active');
+            printRegion.class[toolName === 'printRegion' ? 'add' : 'remove']('active');
             translate.class[toolName === 'move' ? 'add' : 'remove']('active');
             rotate.class[toolName === 'rotate' ? 'add' : 'remove']('active');
             scale.class[toolName === 'scale' ? 'add' : 'remove']('active');
@@ -207,6 +216,7 @@ class BottomToolbar extends Container {
         tooltips.register(lasso, 'Lasso Select');
         tooltips.register(sphere, localize('tooltip.sphere'));
         tooltips.register(box, localize('tooltip.box'));
+        tooltips.register(printRegion, '打印区域');
         // tooltips.register(crop, 'Crop');
         tooltips.register(translate, localize('tooltip.translate'));
         tooltips.register(rotate, localize('tooltip.rotate'));
