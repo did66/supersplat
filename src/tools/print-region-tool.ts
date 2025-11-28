@@ -198,6 +198,21 @@ class PrintRegionTool {
 
 		// 激活工具
 		this.activate = () => {
+			// 检查是否有选中的模型
+			const selected = events.invoke('selection') as Splat;
+			if (!selected) {
+				// 如果没有选中模型，显示提示弹窗
+				events.invoke('showPopup', {
+					type: 'info',
+					header: '提示',
+					message: '请先选择一个模型'
+				});
+				// 触发工具停用事件，确保工具管理器知道工具没有被激活
+				events.fire('tool.deactivate');
+				// 不激活工具，直接返回
+				return;
+			}
+
 			this.active = true;
 			this.printRegion.enabled = true;
 			
@@ -208,15 +223,12 @@ class PrintRegionTool {
 
 			// 如果是第一次激活，自动执行适配选中功能并保存初始状态
 			if (!this.isInitialized) {
-				const selected = events.invoke('selection') as Splat;
-				if (selected) {
-					const bound = selected.worldBound;
-					if (bound) {
-						this.printRegion.pivot.setPosition(bound.center);
-						this.printRegion.lenX = bound.halfExtents.x * 2;
-						this.printRegion.lenY = bound.halfExtents.y * 2;
-						this.printRegion.lenZ = bound.halfExtents.z * 2;
-					}
+				const bound = selected.worldBound;
+				if (bound) {
+					this.printRegion.pivot.setPosition(bound.center);
+					this.printRegion.lenX = bound.halfExtents.x * 2;
+					this.printRegion.lenY = bound.halfExtents.y * 2;
+					this.printRegion.lenZ = bound.halfExtents.z * 2;
 				}
 				
 				// 保存初始状态
