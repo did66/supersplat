@@ -239,6 +239,19 @@ class EditorUI {
             }
         });
 
+        events.on('render.fourViews', async () => {
+            // 获取场景目标尺寸，使用更大的尺寸用于高质量渲染
+            const targetSize = events.invoke('targetSize') as { width: number; height: number };
+            const scale = 2; // 放大2倍以获得更高质量的图片
+            const defaultImageSettings = {
+                width: (targetSize?.width ?? 1920) * scale,
+                height: (targetSize?.height ?? 1080) * scale,
+                transparentBg: false,
+                showDebug: false
+            };
+            await events.invoke('render.fourViews', defaultImageSettings);
+        });
+
         events.function('show.videoSettingsDialog', async () => {
             const videoSettings = await videoSettingsDialog.show();
 

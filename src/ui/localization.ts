@@ -192,6 +192,7 @@ const localizeInit = () => {
 						'tooltip.measure': 'Messung',
 						'tooltip.local-space': 'Gizmo in local-space',
 						'tooltip.bound-center': 'Mittelpunkt verwenden',
+						'tooltip.four-views': 'Vier Ansichten speichern (Vorne, Hinten, Links, Rechts)',
 
 						// Viewer Export
 						'export.header': 'EXPORTIEREN',
@@ -465,6 +466,7 @@ const localizeInit = () => {
 						'tooltip.measure': 'Measurement',
 						'tooltip.local-space': 'Use Local Orientation',
 						'tooltip.bound-center': 'Use Bound Center',
+						'tooltip.four-views': 'Save Four Views (Front, Back, Left, Right)',
 
 						// Viewer Export
 						'export.header': 'EXPORT',
@@ -729,6 +731,7 @@ const localizeInit = () => {
 						'tooltip.measure': 'Mesure',
 						'tooltip.local-space': 'Espace local gizmo',
 						'tooltip.bound-center': 'Utiliser le centre de la limite',
+						'tooltip.four-views': 'Enregistrer quatre vues (Avant, Arrière, Gauche, Droite)',
 
 						// Viewer Export
 						'export.header': 'EXPORTER',
@@ -993,6 +996,7 @@ const localizeInit = () => {
 						'tooltip.measure': '測定',
 						'tooltip.local-space': 'ローカル座標へ切り替え',
 						'tooltip.bound-center': 'バウンディングボックスの中心を使用',
+						'tooltip.four-views': '四方向ビューを保存（前、後、左、右）',
 
 						// Viewer Export
 						'export.header': 'エクスポート',
@@ -1257,6 +1261,7 @@ const localizeInit = () => {
 						'tooltip.measure': '측정',
 						'tooltip.local-space': '로컬 공간',
 						'tooltip.bound-center': '바운드 중심 사용',
+						'tooltip.four-views': '네 방향 뷰 저장 (앞, 뒤, 왼쪽, 오른쪽)',
 
 						// Viewer Export
 						'export.header': '내보내기',
@@ -1521,6 +1526,7 @@ const localizeInit = () => {
 						'tooltip.measure': '测量',
 						'tooltip.local-space': '局部坐标系',
 						'tooltip.bound-center': '使用边界中心',
+						'tooltip.four-views': '保存四视图（前、后、左、右）',
 
 						// Viewer Export
 						'export.header': '导出',

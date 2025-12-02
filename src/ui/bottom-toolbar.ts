@@ -125,6 +125,11 @@ class BottomToolbar extends Container {
 			icon: 'E189'
 		});
 
+		const fourViews = new Button({
+			id: 'bottom-toolbar-four-views',
+			class: 'bottom-toolbar-tool'
+		});
+
 		undo.dom.appendChild(createSvg(undoSvg));
 		redo.dom.appendChild(createSvg(redoSvg));
 		picker.dom.appendChild(createSvg(pickerSvg));
@@ -135,6 +140,7 @@ class BottomToolbar extends Container {
 		box.dom.appendChild(createSvg(boxSvg));
 		printRegion.dom.appendChild(createSvg(cropSvg));
 		lasso.dom.appendChild(createSvg(lassoSvg));
+		fourViews.dom.appendChild(createSvg(boxSvg));
 		// crop.dom.appendChild(createSvg(cropSvg));
 
 		this.append(undo);
@@ -158,6 +164,8 @@ class BottomToolbar extends Container {
 		this.append(measure);
 		this.append(coordSpace);
 		this.append(origin);
+		this.append(new Element({ class: 'bottom-toolbar-separator' }));
+		this.append(fourViews);
 
 		undo.dom.addEventListener('click', () => events.fire('edit.undo'));
 		redo.dom.addEventListener('click', () => events.fire('edit.redo'));
@@ -175,6 +183,7 @@ class BottomToolbar extends Container {
 		measure.dom.addEventListener('click', () => events.fire('tool.measure'));
 		coordSpace.dom.addEventListener('click', () => events.fire('tool.toggleCoordSpace'));
 		origin.dom.addEventListener('click', () => events.fire('pivot.toggleOrigin'));
+		fourViews.dom.addEventListener('click', () => events.fire('render.fourViews'));
 
 		events.on('edit.canUndo', (value: boolean) => {
 			undo.enabled = value;
@@ -224,6 +233,7 @@ class BottomToolbar extends Container {
 		tooltips.register(measure, localize('tooltip.measure'));
 		tooltips.register(coordSpace, localize('tooltip.local-space'));
 		tooltips.register(origin, localize('tooltip.bound-center'));
+		tooltips.register(fourViews, localize('tooltip.four-views'));
 	}
 }
 

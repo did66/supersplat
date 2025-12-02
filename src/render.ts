@@ -178,6 +178,156 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
         }
     });
 
+    events.function('render.fourViews', async (imageSettings: ImageSettings) => {
+        events.fire('startSpinner');
+
+        try {
+            const { width, height, transparentBg, showDebug } = imageSettings;
+            const bgClr = events.invoke('bgClr');
+
+            // 获取可见的splats列表
+            const splats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(splat => splat.visible);
+            if (splats.length === 0) {
+                throw new Error('No visible splats to render');
+            }
+
+            // 获取模型名称
+            const selected = events.invoke('selection') as Splat;
+            const modelName = removeExtension(selected?.name ?? 'SuperSplat');
+
+            // 计算场景包围盒中心作为焦点
+            const bound = scene.bound;
+            const focalPoint = bound.center.clone();
+            const focalRadius = bound.halfExtents.length();
+
+            // 保存当前相机状态
+            const originalFocalPoint = scene.camera.focalPoint.clone();
+            const originalAzim = scene.camera.azim;
+            const originalElev = scene.camera.elevation;
+            const originalDistance = scene.camera.distance;
+
+            // 四视图配置：前、后、左、右
+            const views = [
+                { name: 'front', azim: 0, elev: 0 },      // 前视图
+                { name: 'back', azim: 180, elev: 0 },     // 后视图
+                { name: 'left', azim: 90, elev: 0 },      // 左视图
+                { name: 'right', azim: 270, elev: 0 }     // 右视图
+            ];
+
+            // 确保压缩器已初始化
+            if (!compressor) {
+                compressor = new PngCompressor();
+            }
+
+            // 为每个视角渲染并保存
+            for (let i = 0; i < views.length; i++) {
+                const view = views[i];
+
+                // 设置相机到指定视角（立即更新，无补间）
+                scene.camera.setAzimElev(view.azim, view.elev, 0);
+                scene.camera.setFocalPoint(focalPoint, 0);
+                
+                // 计算合适的相机距离
+                const fdist = focalRadius / scene.camera.sceneRadius;
+                scene.camera.setDistance(isFinite(fdist) ? fdist : 1, 0);
+
+                // 等待相机更新完成（更新补间值）
+                scene.camera.onUpdate(0);
+                scene.camera.onUpdate(0);
+
+                // 等待splat排序完成（类似render.video中的处理）
+                await Promise.all(splats.map((splat) => {
+                    return new Promise<void>((resolve) => {
+                        const { instance } = splat.entity.gsplat;
+
+                        // 监听排序完成事件
+                        const handle = instance.sorter.on('updated', () => {
+                            handle.off();
+                            resolve();
+                        });
+
+                        // 手动触发排序
+                        instance.sort(scene.camera.entity);
+
+                        // 超时保护
+                        setTimeout(() => {
+                            resolve();
+                        }, 1000);
+                    });
+                }));
+
+                // 开始离屏渲染
+                scene.camera.startOffscreenMode(width, height);
+                scene.camera.renderOverlays = showDebug;
+                if (!transparentBg) {
+                    scene.camera.entity.camera.clearColor.copy(bgClr);
+                }
+
+                // 渲染下一帧
+                scene.forceRender = true;
+
+                // 等待渲染完成
+                await postRender();
+
+                // 读取渲染数据
+                const data = new Uint8Array(width * height * 4);
+                const { renderTarget } = scene.camera.entity.camera;
+                const { workRenderTarget } = scene.camera;
+
+                scene.dataProcessor.copyRt(renderTarget, workRenderTarget);
+                await workRenderTarget.colorBuffer.read(0, 0, width, height, { renderTarget: workRenderTarget, data });
+
+                // 应用背景色（如果不是透明背景）
+                if (!transparentBg) {
+                    // @ts-ignore
+                    const pixels = new Uint8ClampedArray(data.buffer);
+                    const { r, g, b } = bgClr;
+                    for (let j = 0; j < pixels.length; j += 4) {
+                        const a = 255 - pixels[j + 3];
+                        pixels[j + 0] += r * a;
+                        pixels[j + 1] += g * a;
+                        pixels[j + 2] += b * a;
+                        pixels[j + 3] = 255;
+                    }
+                }
+
+                // 压缩为PNG
+                const arrayBuffer = await compressor.compress(
+                    new Uint32Array(data.buffer),
+                    width,
+                    height
+                );
+
+                // 下载文件
+                const filename = `${modelName}-${view.name}.png`;
+                downloadFile(arrayBuffer, filename);
+
+                // 结束离屏渲染模式
+                scene.camera.endOffscreenMode();
+            }
+
+            // 恢复原始相机状态
+            scene.camera.setAzimElev(originalAzim, originalElev, 0);
+            scene.camera.setFocalPoint(originalFocalPoint, 0);
+            scene.camera.setDistance(originalDistance, 0);
+            scene.camera.onUpdate(0);
+            scene.forceRender = true;
+
+            return true;
+        } catch (error) {
+            await events.invoke('showPopup', {
+                type: 'error',
+                header: localize('render.failed'),
+                message: `'${error.message ?? error}'`
+            });
+        } finally {
+            scene.camera.endOffscreenMode();
+            scene.camera.renderOverlays = true;
+            scene.camera.entity.camera.clearColor.set(0, 0, 0, 0);
+            events.fire('stopSpinner');
+        }
+    });
+
     events.function('render.video', async (videoSettings: VideoSettings, fileStream: FileSystemWritableFileStream) => {
         events.fire('progressStart', localize('render.render-video'));
 
