@@ -250,6 +250,18 @@ class EditorUI {
             await events.invoke('render.fourViews', defaultImageSettings);
         });
 
+        events.on('upload.modelAndViews', async () => {
+            // 使用固定的服务端URL
+            const serverUrl = 'http://localhost:3000/api/upload';
+
+            try {
+                await events.invoke('upload.modelAndViews', serverUrl);
+            } catch (error) {
+                // 错误已经在upload.modelAndViews中处理
+                console.error('Upload failed:', error);
+            }
+        });
+
         events.function('show.videoSettingsDialog', async () => {
             const videoSettings = await videoSettingsDialog.show();
 

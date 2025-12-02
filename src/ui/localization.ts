@@ -193,6 +193,7 @@ const localizeInit = () => {
 						'tooltip.local-space': 'Gizmo in local-space',
 						'tooltip.bound-center': 'Mittelpunkt verwenden',
 						'tooltip.four-views': 'Vier Ansichten speichern (Vorne, Hinten, Links, Rechts)',
+						'tooltip.upload-model': 'Modell und vier Ansichten an Server senden',
 
 						// Viewer Export
 						'export.header': 'EXPORTIEREN',
@@ -467,6 +468,7 @@ const localizeInit = () => {
 						'tooltip.local-space': 'Use Local Orientation',
 						'tooltip.bound-center': 'Use Bound Center',
 						'tooltip.four-views': 'Save Four Views (Front, Back, Left, Right)',
+						'tooltip.upload-model': 'Upload Model and Four Views to Server',
 
 						// Viewer Export
 						'export.header': 'EXPORT',
@@ -732,6 +734,7 @@ const localizeInit = () => {
 						'tooltip.local-space': 'Espace local gizmo',
 						'tooltip.bound-center': 'Utiliser le centre de la limite',
 						'tooltip.four-views': 'Enregistrer quatre vues (Avant, Arrière, Gauche, Droite)',
+						'tooltip.upload-model': 'Télécharger le modèle et quatre vues vers le serveur',
 
 						// Viewer Export
 						'export.header': 'EXPORTER',
@@ -997,6 +1000,7 @@ const localizeInit = () => {
 						'tooltip.local-space': 'ローカル座標へ切り替え',
 						'tooltip.bound-center': 'バウンディングボックスの中心を使用',
 						'tooltip.four-views': '四方向ビューを保存（前、後、左、右）',
+						'tooltip.upload-model': 'モデルと四方向ビューをサーバーにアップロード',
 
 						// Viewer Export
 						'export.header': 'エクスポート',
@@ -1262,6 +1266,7 @@ const localizeInit = () => {
 						'tooltip.local-space': '로컬 공간',
 						'tooltip.bound-center': '바운드 중심 사용',
 						'tooltip.four-views': '네 방향 뷰 저장 (앞, 뒤, 왼쪽, 오른쪽)',
+						'tooltip.upload-model': '모델과 네 방향 뷰를 서버에 업로드',
 
 						// Viewer Export
 						'export.header': '내보내기',
@@ -1527,6 +1532,7 @@ const localizeInit = () => {
 						'tooltip.local-space': '局部坐标系',
 						'tooltip.bound-center': '使用边界中心',
 						'tooltip.four-views': '保存四视图（前、后、左、右）',
+						'tooltip.upload-model': '上传模型和四视图到服务端',
 
 						// Viewer Export
 						'export.header': '导出',

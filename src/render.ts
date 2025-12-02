@@ -282,6 +282,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				scene.forceRender = false;
 			}
 
+			// 存储四视图图片数据
+			const fourViewsImages: Array<{ name: string, data: ArrayBuffer }> = [];
+
 			// ---- 主循环：对每个视角严格顺序处理 ----
 			for (const view of views) {
 				// 1. 先恢复原始相机状态（确保场景状态检测系统看到的是原始状态）
@@ -336,13 +339,21 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					}
 				}
 
-				// 10. 压缩并保存
+				// 10. 压缩图片
 				const arrayBuffer = await compressor.compress(
 					new Uint32Array(data.buffer),
 					width,
 					height
 				);
-				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
+
+				// 保存图片数据（用于上传）
+				fourViewsImages.push({
+					name: `${modelName}-${view.name}.png`,
+					data: arrayBuffer
+				});
+
+				// 同时下载文件（保持原有功能）
+				// downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
 				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
@@ -362,7 +373,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 触发一次渲染，确保主视图显示正确的状态
 			scene.forceRender = true;
 
-			return true;
+			// 返回四视图图片数据
+			return fourViewsImages;
 
 		} catch (err) {
 			await events.invoke('showPopup', {
@@ -376,6 +388,110 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			try { scene.camera.entity.camera.clearColor.set(0, 0, 0, 0); } catch (e) { }
 			scene.lockedRenderMode = false;
 			scene.forceRender = true;
+			events.fire('stopSpinner');
+		}
+	});
+
+	// 上传模型数据和四视图到服务端
+	events.function('upload.modelAndViews', async (serverUrl: string) => {
+		events.fire('startSpinner');
+
+		try {
+			// 1. 获取当前选中的模型
+			const selected = events.invoke('selection') as Splat;
+			if (!selected) {
+				throw new Error('No model selected');
+			}
+
+			const modelName = removeExtension(selected.name ?? 'SuperSplat');
+
+			// 2. 获取模型数据（序列化为PLY格式）
+			const splats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
+			if (splats.length === 0) {
+				throw new Error('No visible splats to upload');
+			}
+
+			// 导入序列化相关模块
+			const { BufferWriter } = await import('./serialize/writer');
+			const { serializePly } = await import('./splat-serialize');
+
+			// 序列化模型数据到内存
+			const modelBuffer = new BufferWriter();
+			const serializeSettings = {
+				keepStateData: false,
+				keepWorldTransform: true,
+				keepColorTint: true
+			};
+			await serializePly(splats, serializeSettings, modelBuffer);
+			const buffers = modelBuffer.close();
+			// 合并所有buffer为一个ArrayBuffer
+			const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+			const modelData = new Uint8Array(totalLength);
+			let offset = 0;
+			for (const buf of buffers) {
+				modelData.set(buf, offset);
+				offset += buf.byteLength;
+			}
+
+			// 3. 生成四视图
+			const defaultImageSettings = {
+				width: 500,
+				height: 500,
+				transparentBg: true,
+				showDebug: false
+			};
+			const fourViewsImages = await events.invoke('render.fourViews', defaultImageSettings) as Array<{ name: string, data: ArrayBuffer }>;
+
+			if (!fourViewsImages || fourViewsImages.length !== 4) {
+				throw new Error('Failed to generate four views');
+			}
+
+			// 4. 构建FormData发送到服务端
+			const formData = new FormData();
+
+			// 添加模型文件
+			const modelBlob = new Blob([modelData], { type: 'application/ply' });
+			formData.append('model', modelBlob, `${modelName}.ply`);
+
+			// 添加模型名称
+			formData.append('modelName', modelName);
+
+			// 添加四视图图片
+			for (const view of fourViewsImages) {
+				const imageBlob = new Blob([view.data], { type: 'image/png' });
+				formData.append('views', imageBlob, view.name);
+			}
+
+			// 5. 发送到服务端
+			const response = await fetch(serverUrl, {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				throw new Error(`Server error: ${response.status} ${response.statusText} - ${errorText}`);
+			}
+
+			const result = await response.json();
+
+			// 6. 显示成功消息
+			await events.invoke('showPopup', {
+				type: 'success',
+				header: 'Upload Successful',
+				message: `Model "${modelName}" and four views uploaded successfully.`
+			});
+
+			return result;
+
+		} catch (err) {
+			await events.invoke('showPopup', {
+				type: 'error',
+				header: 'Upload Failed',
+				message: `'${err?.message ?? err}'`
+			});
+			throw err;
+		} finally {
 			events.fire('stopSpinner');
 		}
 	});

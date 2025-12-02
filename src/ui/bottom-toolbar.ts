@@ -13,6 +13,7 @@ import boxSvg from './svg/show-hide-splats.svg';
 import undoSvg from './svg/undo.svg';
 import { Tooltips } from './tooltips';
 import cropSvg from './svg/crop.svg';
+import publishSvg from './svg/publish.svg';
 
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
@@ -130,6 +131,11 @@ class BottomToolbar extends Container {
 			class: 'bottom-toolbar-tool'
 		});
 
+		const upload = new Button({
+			id: 'bottom-toolbar-upload',
+			class: 'bottom-toolbar-tool'
+		});
+
 		undo.dom.appendChild(createSvg(undoSvg));
 		redo.dom.appendChild(createSvg(redoSvg));
 		picker.dom.appendChild(createSvg(pickerSvg));
@@ -141,6 +147,7 @@ class BottomToolbar extends Container {
 		printRegion.dom.appendChild(createSvg(cropSvg));
 		lasso.dom.appendChild(createSvg(lassoSvg));
 		fourViews.dom.appendChild(createSvg(boxSvg));
+		upload.dom.appendChild(createSvg(publishSvg));
 		// crop.dom.appendChild(createSvg(cropSvg));
 
 		this.append(undo);
@@ -166,6 +173,7 @@ class BottomToolbar extends Container {
 		this.append(origin);
 		this.append(new Element({ class: 'bottom-toolbar-separator' }));
 		this.append(fourViews);
+		this.append(upload);
 
 		undo.dom.addEventListener('click', () => events.fire('edit.undo'));
 		redo.dom.addEventListener('click', () => events.fire('edit.redo'));
@@ -184,6 +192,7 @@ class BottomToolbar extends Container {
 		coordSpace.dom.addEventListener('click', () => events.fire('tool.toggleCoordSpace'));
 		origin.dom.addEventListener('click', () => events.fire('pivot.toggleOrigin'));
 		fourViews.dom.addEventListener('click', () => events.fire('render.fourViews'));
+		upload.dom.addEventListener('click', () => events.fire('upload.modelAndViews'));
 
 		events.on('edit.canUndo', (value: boolean) => {
 			undo.enabled = value;
@@ -234,6 +243,7 @@ class BottomToolbar extends Container {
 		tooltips.register(coordSpace, localize('tooltip.local-space'));
 		tooltips.register(origin, localize('tooltip.bound-center'));
 		tooltips.register(fourViews, localize('tooltip.four-views'));
+		tooltips.register(upload, localize('tooltip.upload-model'));
 	}
 }
 
