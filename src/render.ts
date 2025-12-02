@@ -195,6 +195,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const focalPoint = bound.center.clone();
 			const focalRadius = bound.halfExtents.length();
 
+			// 保存原始相机状态（用于恢复）
 			const orig = {
 				focalPoint: scene.camera.focalPoint.clone(),
 				azim: scene.camera.azim,
@@ -202,7 +203,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				distance: scene.camera.distance
 			};
 
-			scene.lockedRenderMode = true;
+			// 计算统一的相机距离
+			const fdist = (focalRadius / scene.camera.sceneRadius) * 1;
+			const targetDistance = isFinite(fdist) ? fdist : 1;
 
 			const views = [
 				{ name: 'front', azim: 0, elev: 0 },
@@ -213,16 +216,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 			if (!compressor) compressor = new PngCompressor();
 
-			// 统一设置相机距离和焦点（只一次）
-			// 在进入离屏模式之前设置，避免触发主视图更新
-			const fdist = (focalRadius / scene.camera.sceneRadius) * 1;
-			const targetDistance = isFinite(fdist) ? fdist : 1;
-			scene.camera.setDistance(targetDistance, 0);
-			scene.camera.setFocalPoint(focalPoint, 0);
-			scene.camera.onUpdate(0);
-			scene.camera.onUpdate(0);
-			// 清除forceRender，防止触发主视图渲染
-			scene.forceRender = false;
+			// 进入锁定渲染模式：只有明确设置lockedRender才会渲染
+			scene.lockedRenderMode = true;
 
 			// 等待若干渲染帧以确保稳定（在锁定模式下，不触发主视图更新）
 			async function waitStableFrames(frames = 4) {
@@ -278,63 +273,57 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				await Promise.all(splats.map(s => waitSorterUpdatedFor(s, timeoutPer)));
 			}
 
-			// ---- 主循环：对每个视角严格顺序处理 ----
-			for (const view of views) {
-				// 先恢复原始相机状态，确保场景状态检测系统看到的是原始状态
+			// 恢复原始相机状态的辅助函数
+			function restoreOriginalCamera() {
 				scene.camera.setFocalPoint(orig.focalPoint, 0);
 				scene.camera.setAzimElev(orig.azim, orig.elev, 0);
 				scene.camera.setDistance(orig.distance, 0);
 				scene.camera.onUpdate(0);
 				scene.forceRender = false;
+			}
 
-				// 先开启 offscreen（让渲染目标/分辨率对后续排序/LOD 一致）
-				// 必须在改变相机角度之前进入离屏模式，确保主视图不受影响
+			// ---- 主循环：对每个视角严格顺序处理 ----
+			for (const view of views) {
+				// 1. 先恢复原始相机状态（确保场景状态检测系统看到的是原始状态）
+				restoreOriginalCamera();
+
+				// 2. 进入离屏渲染模式（suppressFinalBlit会阻止blit到主画布）
 				scene.camera.startOffscreenMode(width, height);
 				scene.camera.renderOverlays = showDebug;
 
-				// 设置背景色（在 offscreen 后设置）
+				// 3. 设置背景色
 				if (!transparentBg) {
 					scene.camera.entity.camera.clearColor.copy(bgClr);
 				} else {
-					// 透明模式下确保 alpha 为 0
 					scene.camera.entity.camera.clearColor.set(0, 0, 0, 0);
 				}
 
-				// 设置统一的距离和焦点（用于四视图）
+				// 4. 设置相机到目标视角（只在离屏模式下）
 				scene.camera.setDistance(targetDistance, 0);
 				scene.camera.setFocalPoint(focalPoint, 0);
-				scene.camera.onUpdate(0);
-
-				// 只改变角度（不改 distance / focalPoint）
-				// 在离屏模式和锁定模式下改变角度，suppressFinalBlit确保不会blit到主画布
-				// 注意：必须在进入离屏模式后再改变角度，这样主视图不会受影响
 				scene.camera.setAzimElev(view.azim, view.elev, 0);
 				scene.camera.onUpdate(0);
-				// 立即清除forceRender标志，防止触发主视图渲染
 				scene.forceRender = false;
 
-				// 尽可能确保每个 splat 明确触发排序并等待 sorter.updated
+				// 5. 等待splat排序完成
 				await waitAllSorters(1000);
 
-				// 再等几帧让渲染稳定（补偿任何后续帧内的调整）
-				// 在等待过程中，确保lockedRender标志已设置，这样只会渲染到离屏缓冲区
+				// 6. 等待几帧让渲染稳定
 				await waitStableFrames(5);
 
-				// 确保 lockedRender 标记，进行一次最终渲染
-				// 在锁定模式下，只有设置lockedRender=true才会渲染，且只渲染到离屏缓冲区
+				// 7. 触发一次离屏渲染
 				scene.lockedRender = true;
 				await postRender();
 
-				// 读取渲染数据
+				// 8. 读取渲染数据
 				const data = new Uint8Array(width * height * 4);
 				const { renderTarget } = scene.camera.entity.camera;
 				const { workRenderTarget } = scene.camera;
 
-				// 复制并读取当前 workRenderTarget（保证 offscreen 的 RT 被读到）
 				scene.dataProcessor.copyRt(renderTarget, workRenderTarget);
 				await workRenderTarget.colorBuffer.read(0, 0, width, height, { renderTarget: workRenderTarget, data });
 
-				// 应用背景色（非透明）
+				// 9. 应用背景色（非透明）
 				if (!transparentBg) {
 					const pixels = new Uint8ClampedArray(data.buffer);
 					const { r, g, b } = bgClr;
@@ -347,7 +336,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					}
 				}
 
-				// 压缩并保存
+				// 10. 压缩并保存
 				const arrayBuffer = await compressor.compress(
 					new Uint32Array(data.buffer),
 					width,
@@ -355,27 +344,22 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				);
 				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
-				// 结束 offscreen（为下一个视角清理）
+				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
 
-				// 立即恢复原始相机状态，确保场景状态检测系统看到的是原始状态
-				scene.camera.setFocalPoint(orig.focalPoint, 0);
-				scene.camera.setAzimElev(orig.azim, orig.elev, 0);
-				scene.camera.setDistance(orig.distance, 0);
-				scene.camera.onUpdate(0);
-				scene.forceRender = false;
+				// 12. 立即恢复原始相机状态（关键：在场景状态检测之前恢复）
+				restoreOriginalCamera();
 
-				// 保证一帧渲染后再继续（减少 race）
+				// 13. 等待一帧，让场景状态检测系统看到恢复后的状态
 				await waitStableFrames(1);
 			}
 
-			// 恢复相机原始状态
-			scene.camera.setAzimElev(orig.azim, orig.elev, 0);
-			scene.camera.setFocalPoint(orig.focalPoint, 0);
-			scene.camera.setDistance(orig.distance, 0);
-			scene.camera.onUpdate(0);
+			// 最终恢复原始相机状态
+			restoreOriginalCamera();
 
+			// 退出锁定渲染模式
 			scene.lockedRenderMode = false;
+			// 触发一次渲染，确保主视图显示正确的状态
 			scene.forceRender = true;
 
 			return true;
