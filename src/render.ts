@@ -392,8 +392,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 		}
 	});
 
-	// 上传模型数据和四视图到服务端
-	events.function('upload.modelAndViews', async (serverUrl: string) => {
+	// 准备模型数据和四视图（用于 postMessage 或直接上传）
+	events.function('prepare.modelAndViews', async () => {
 		events.fire('startSpinner');
 
 		try {
@@ -446,48 +446,19 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				throw new Error('Failed to generate four views');
 			}
 
-			// 4. 构建FormData发送到服务端
-			const formData = new FormData();
-
-			// 添加模型文件
-			const modelBlob = new Blob([modelData], { type: 'application/ply' });
-			formData.append('model', modelBlob, `${modelName}.ply`);
-
-			// 添加模型名称
-			formData.append('modelName', modelName);
-
-			// 添加四视图图片
-			for (const view of fourViewsImages) {
-				const imageBlob = new Blob([view.data], { type: 'image/png' });
-				formData.append('views', imageBlob, view.name);
-			}
-
-			// 5. 发送到服务端
-			const response = await fetch(serverUrl, {
-				method: 'POST',
-				body: formData
-			});
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`Server error: ${response.status} ${response.statusText} - ${errorText}`);
-			}
-
-			const result = await response.json();
-
-			// 6. 显示成功消息
-			await events.invoke('showPopup', {
-				type: 'success',
-				header: 'Upload Successful',
-				message: `Model "${modelName}" and four views uploaded successfully.`
-			});
-
-			return result;
+			return {
+				modelName,
+				modelData: modelData.buffer, // ArrayBuffer
+				fourViews: fourViewsImages.map(view => ({
+					name: view.name,
+					data: view.data // ArrayBuffer
+				}))
+			};
 
 		} catch (err) {
 			await events.invoke('showPopup', {
 				type: 'error',
-				header: 'Upload Failed',
+				header: 'Prepare Failed',
 				message: `'${err?.message ?? err}'`
 			});
 			throw err;
@@ -495,6 +466,66 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			events.fire('stopSpinner');
 		}
 	});
+
+	// 通过 postMessage 发送模型数据和四视图到父组件
+	events.function('send.modelAndViewsToParent', async () => {
+		events.fire('startSpinner');
+
+		try {
+			// 检查是否在 iframe 中
+			if (window.parent === window) {
+				throw new Error('Not in an iframe. Cannot send message to parent.');
+			}
+
+			// 准备数据
+			const data = await events.invoke('prepare.modelAndViews') as {
+				modelName: string;
+				modelData: ArrayBuffer;
+				fourViews: Array<{ name: string, data: ArrayBuffer }>;
+			};
+
+			// 使用 Transferable Objects 优化大文件传输（零拷贝）
+			// 注意：使用 transferable 后，原始 ArrayBuffer 会被转移，不能再使用
+			const transferables: Transferable[] = [data.modelData];
+			for (const view of data.fourViews) {
+				transferables.push(view.data);
+			}
+
+			// 构建消息数据
+			const message = {
+				type: 'supersplat:modelAndViews',
+				modelName: data.modelName,
+				modelData: data.modelData,
+				fourViews: data.fourViews.map(view => ({
+					name: view.name,
+					data: view.data
+				}))
+			};
+
+			// 发送消息到父窗口（使用 transferable 优化）
+			window.parent.postMessage(message, '*', transferables);
+
+			// 显示成功消息
+			await events.invoke('showPopup', {
+				type: 'success',
+				header: 'Data Sent',
+				message: `Model "${data.modelName}" and four views sent to parent window.`
+			});
+
+			return true;
+
+		} catch (err) {
+			await events.invoke('showPopup', {
+				type: 'error',
+				header: 'Send Failed',
+				message: `'${err?.message ?? err}'`
+			});
+			throw err;
+		} finally {
+			events.fire('stopSpinner');
+		}
+	});
+
 
 
 	events.function('render.video', async (videoSettings: VideoSettings, fileStream: FileSystemWritableFileStream) => {

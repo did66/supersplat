@@ -251,14 +251,12 @@ class EditorUI {
         });
 
         events.on('upload.modelAndViews', async () => {
-            // 使用固定的服务端URL
-            const serverUrl = 'http://localhost:3000/api/upload';
-
+            // 通过 postMessage 发送给父组件
             try {
-                await events.invoke('upload.modelAndViews', serverUrl);
+                await events.invoke('send.modelAndViewsToParent');
             } catch (error) {
-                // 错误已经在upload.modelAndViews中处理
-                console.error('Upload failed:', error);
+                // 错误已经在send.modelAndViewsToParent中处理
+                console.error('Send to parent failed:', error);
             }
         });
 
