@@ -240,13 +240,11 @@ class EditorUI {
         });
 
         events.on('render.fourViews', async () => {
-            // 获取场景目标尺寸，使用更大的尺寸用于高质量渲染
-            const targetSize = events.invoke('targetSize') as { width: number; height: number };
-            const scale = 2; // 放大2倍以获得更高质量的图片
+            // 使用500x500正方形，透明背景
             const defaultImageSettings = {
-                width: (targetSize?.width ?? 1920) * scale,
-                height: (targetSize?.height ?? 1080) * scale,
-                transparentBg: false,
+                width: 500,
+                height: 500,
+                transparentBg: true,
                 showDebug: false
             };
             await events.invoke('render.fourViews', defaultImageSettings);
