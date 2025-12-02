@@ -227,8 +227,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
                 scene.camera.setAzimElev(view.azim, view.elev, 0);
                 scene.camera.setFocalPoint(focalPoint, 0);
                 
-                // 计算合适的相机距离
-                const fdist = focalRadius / scene.camera.sceneRadius;
+                // 计算合适的相机距离，使用0.7的缩放因子让模型占据更大的画面
+                const fdist = (focalRadius / scene.camera.sceneRadius) * 0.7;
                 scene.camera.setDistance(isFinite(fdist) ? fdist : 1, 0);
 
                 // 等待相机更新完成（更新补间值）
