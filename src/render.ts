@@ -214,27 +214,26 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			if (!compressor) compressor = new PngCompressor();
 
 			// 统一设置相机距离和焦点（只一次）
+			// 在进入离屏模式之前设置，避免触发主视图更新
 			const fdist = (focalRadius / scene.camera.sceneRadius) * 1;
 			const targetDistance = isFinite(fdist) ? fdist : 1;
 			scene.camera.setDistance(targetDistance, 0);
 			scene.camera.setFocalPoint(focalPoint, 0);
 			scene.camera.onUpdate(0);
 			scene.camera.onUpdate(0);
+			// 清除forceRender，防止触发主视图渲染
+			scene.forceRender = false;
 
-			// 等待若干渲染帧以确保稳定（通用）
-			function waitStableFrames(frames = 4) {
-				return new Promise<void>((resolve) => {
-					let count = 0;
-					function tick() {
-						scene.camera.onUpdate(0);
-						scene.lockedRender = true;
-						postRender().then(() => {
-							if (++count >= frames) resolve();
-							else requestAnimationFrame(tick);
-						});
-					}
-					tick();
-				});
+			// 等待若干渲染帧以确保稳定（在锁定模式下，不触发主视图更新）
+			async function waitStableFrames(frames = 4) {
+				for (let i = 0; i < frames; i++) {
+					scene.camera.onUpdate(0);
+					// 在锁定模式下，只有设置lockedRender才会渲染，且只渲染到离屏缓冲区
+					scene.lockedRender = true;
+					// 确保forceRender被清除，防止触发主视图渲染
+					scene.forceRender = false;
+					await postRender();
+				}
 			}
 
 			// 等待单个 splat 的 sorter 完成（或超时），返回 Promise
@@ -281,7 +280,15 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 			// ---- 主循环：对每个视角严格顺序处理 ----
 			for (const view of views) {
+				// 先恢复原始相机状态，确保场景状态检测系统看到的是原始状态
+				scene.camera.setFocalPoint(orig.focalPoint, 0);
+				scene.camera.setAzimElev(orig.azim, orig.elev, 0);
+				scene.camera.setDistance(orig.distance, 0);
+				scene.camera.onUpdate(0);
+				scene.forceRender = false;
+
 				// 先开启 offscreen（让渲染目标/分辨率对后续排序/LOD 一致）
+				// 必须在改变相机角度之前进入离屏模式，确保主视图不受影响
 				scene.camera.startOffscreenMode(width, height);
 				scene.camera.renderOverlays = showDebug;
 
@@ -293,17 +300,28 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					scene.camera.entity.camera.clearColor.set(0, 0, 0, 0);
 				}
 
+				// 设置统一的距离和焦点（用于四视图）
+				scene.camera.setDistance(targetDistance, 0);
+				scene.camera.setFocalPoint(focalPoint, 0);
+				scene.camera.onUpdate(0);
+
 				// 只改变角度（不改 distance / focalPoint）
+				// 在离屏模式和锁定模式下改变角度，suppressFinalBlit确保不会blit到主画布
+				// 注意：必须在进入离屏模式后再改变角度，这样主视图不会受影响
 				scene.camera.setAzimElev(view.azim, view.elev, 0);
 				scene.camera.onUpdate(0);
+				// 立即清除forceRender标志，防止触发主视图渲染
+				scene.forceRender = false;
 
 				// 尽可能确保每个 splat 明确触发排序并等待 sorter.updated
 				await waitAllSorters(1000);
 
 				// 再等几帧让渲染稳定（补偿任何后续帧内的调整）
+				// 在等待过程中，确保lockedRender标志已设置，这样只会渲染到离屏缓冲区
 				await waitStableFrames(5);
 
 				// 确保 lockedRender 标记，进行一次最终渲染
+				// 在锁定模式下，只有设置lockedRender=true才会渲染，且只渲染到离屏缓冲区
 				scene.lockedRender = true;
 				await postRender();
 
@@ -339,6 +357,13 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 				// 结束 offscreen（为下一个视角清理）
 				scene.camera.endOffscreenMode();
+
+				// 立即恢复原始相机状态，确保场景状态检测系统看到的是原始状态
+				scene.camera.setFocalPoint(orig.focalPoint, 0);
+				scene.camera.setAzimElev(orig.azim, orig.elev, 0);
+				scene.camera.setDistance(orig.distance, 0);
+				scene.camera.onUpdate(0);
+				scene.forceRender = false;
 
 				// 保证一帧渲染后再继续（减少 race）
 				await waitStableFrames(1);
