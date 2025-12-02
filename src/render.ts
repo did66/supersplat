@@ -491,14 +491,19 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				transferables.push(view.data);
 			}
 
-			// 构建消息数据
+			// 构建消息数据，包含文件信息以便父组件创建 File 对象
 			const message = {
 				type: 'supersplat:modelAndViews',
 				modelName: data.modelName,
-				modelData: data.modelData,
-				fourViews: data.fourViews.map(view => ({
-					name: view.name,
-					data: view.data
+				model: {
+					data: data.modelData,
+					filename: `${data.modelName}.ply`,
+					type: 'application/ply'
+				},
+				views: data.fourViews.map(view => ({
+					data: view.data,
+					filename: view.name,
+					type: 'image/png'
 				}))
 			};
 
