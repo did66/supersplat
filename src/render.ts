@@ -203,8 +203,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				distance: scene.camera.distance
 			};
 
-			// 计算统一的相机距离
-			const fdist = (focalRadius / scene.camera.sceneRadius) * 1;
+			// 计算统一的相机距离-调整四视图大小
+			const fdist = (focalRadius / scene.camera.sceneRadius) * 1.5;
 			const targetDistance = isFinite(fdist) ? fdist : 1;
 
 			const views = [
