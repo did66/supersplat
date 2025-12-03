@@ -283,7 +283,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			}
 
 			// 存储四视图图片数据
-			const fourViewsImages: Array<{ name: string, data: ArrayBuffer }> = [];
+			const fourViewsImages: Array<{ name: string, position: string, data: ArrayBuffer }> = [];
 
 			// ---- 主循环：对每个视角严格顺序处理 ----
 			for (const view of views) {
@@ -349,7 +349,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				// 保存图片数据（用于上传）
 				fourViewsImages.push({
 					name: `${modelName}-${view.name}.png`,
-					data: arrayBuffer
+					data: arrayBuffer,
+					position: view.name
 				});
 
 				// 同时下载文件（保持原有功能）
@@ -440,7 +441,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				transparentBg: true,
 				showDebug: false
 			};
-			const fourViewsImages = await events.invoke('render.fourViews', defaultImageSettings) as Array<{ name: string, data: ArrayBuffer }>;
+			const fourViewsImages = await events.invoke('render.fourViews', defaultImageSettings) as Array<{ name: string, position: string, data: ArrayBuffer }>;
 
 			if (!fourViewsImages || fourViewsImages.length !== 4) {
 				throw new Error('Failed to generate four views');
@@ -451,7 +452,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				modelData: modelData.buffer, // ArrayBuffer
 				fourViews: fourViewsImages.map(view => ({
 					name: view.name,
-					data: view.data // ArrayBuffer
+					data: view.data, // ArrayBuffer
+					position: view.position
 				}))
 			};
 
@@ -481,42 +483,76 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const data = await events.invoke('prepare.modelAndViews') as {
 				modelName: string;
 				modelData: ArrayBuffer;
-				fourViews: Array<{ name: string, data: ArrayBuffer }>;
+				fourViews: Array<{ name: string, position: string, data: ArrayBuffer }>;
 			};
+
+			// 获取模型的包围盒，计算高、深、宽比例
+			const bound = scene.bound;
+			const halfExtents = bound.halfExtents;
+			const width = halfExtents.x * 2;
+			const height = halfExtents.y * 2;
+			const depth = halfExtents.z * 2;
+
+			// 计算比例（高度为1）
+			const dimensions = {
+				width: width,
+				height: height,
+				depth: depth,
+				// 比例（高度为1）
+				ratio: {
+					width: height > 0 ? width / height : 0,
+					height: 1,
+					depth: height > 0 ? depth / height : 0
+				}
+			};
+
+			// 确保所有数据都是 ArrayBuffer 类型（Transferable）
+			// modelData 应该是 ArrayBuffer（从 modelData.buffer 获取）
+			const modelDataBuffer: ArrayBuffer = data.modelData instanceof ArrayBuffer
+				? data.modelData
+				: (data.modelData as any).buffer;
+
+			// 确保所有视图数据都是 ArrayBuffer
+			const viewBuffers: ArrayBuffer[] = data.fourViews.map(view => {
+				return view.data instanceof ArrayBuffer
+					? view.data
+					: (view.data as any).buffer;
+			});
+
+			// 验证所有数据都是 ArrayBuffer
+			if (!(modelDataBuffer instanceof ArrayBuffer)) {
+				throw new Error('Model data is not an ArrayBuffer');
+			}
+			for (let i = 0; i < viewBuffers.length; i++) {
+				if (!(viewBuffers[i] instanceof ArrayBuffer)) {
+					throw new Error(`View data at index ${i} is not an ArrayBuffer`);
+				}
+			}
 
 			// 使用 Transferable Objects 优化大文件传输（零拷贝）
 			// 注意：使用 transferable 后，原始 ArrayBuffer 会被转移，不能再使用
-			const transferables: Transferable[] = [data.modelData];
-			for (const view of data.fourViews) {
-				transferables.push(view.data);
-			}
+			const transferables: Transferable[] = [modelDataBuffer, ...viewBuffers];
 
 			// 构建消息数据，包含文件信息以便父组件创建 File 对象
 			const message = {
 				type: 'supersplat:modelAndViews',
 				modelName: data.modelName,
+				dimensions: dimensions,
 				model: {
-					data: data.modelData,
+					data: modelDataBuffer,
 					filename: `${data.modelName}.ply`,
-					type: 'application/ply'
+					type: 'ply'
 				},
-				views: data.fourViews.map(view => ({
-					data: view.data,
+				views: data.fourViews.map((view, index) => ({
+					data: viewBuffers[index],
 					filename: view.name,
-					type: 'image/png'
+					type: 'image/png',
+					position: view.position
 				}))
 			};
 
 			// 发送消息到父窗口（使用 transferable 优化）
 			window.parent.postMessage(message, '*', transferables);
-
-			// 显示成功消息
-			await events.invoke('showPopup', {
-				type: 'success',
-				header: 'Data Sent',
-				message: `Model "${data.modelName}" and four views sent to parent window.`
-			});
-
 			return true;
 
 		} catch (err) {
