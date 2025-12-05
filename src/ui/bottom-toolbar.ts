@@ -13,7 +13,7 @@ import sphereSvg from './svg/select-sphere.svg';
 import boxSvg from './svg/show-hide-splats.svg';
 import undoSvg from './svg/undo.svg';
 import { Tooltips } from './tooltips';
-// import cropSvg from './svg/crop.svg';
+import cropSvg from './svg/crop.svg';
 import publishSvg from './svg/publish.svg';
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
@@ -131,6 +131,11 @@ class BottomToolbar extends Container {
 			class: 'bottom-toolbar-tool'
 		});
 
+		const printRegion = new Button({
+			id: 'bottom-toolbar-print-region',
+			class: 'bottom-toolbar-tool'
+		});
+
 		undo.dom.appendChild(createSvg(undoSvg));
 		redo.dom.appendChild(createSvg(redoSvg));
 		picker.dom.appendChild(createSvg(pickerSvg));
@@ -143,6 +148,7 @@ class BottomToolbar extends Container {
 		eyedropper.dom.appendChild(createSvg(eyedropperSvg));
 		// crop.dom.appendChild(createSvg(cropSvg));
 		upload.dom.appendChild(createSvg(publishSvg));
+		printRegion.dom.appendChild(createSvg(cropSvg));
 
 		this.append(undo);
 		this.append(redo);
@@ -156,6 +162,7 @@ class BottomToolbar extends Container {
 		this.append(new Element({ class: 'bottom-toolbar-separator' }));
 		this.append(sphere);
 		this.append(box);
+		this.append(printRegion);
 		// this.append(crop);
 		this.append(new Element({ class: 'bottom-toolbar-separator' }));
 		this.append(translate);
@@ -184,6 +191,7 @@ class BottomToolbar extends Container {
 		coordSpace.dom.addEventListener('click', () => events.fire('tool.toggleCoordSpace'));
 		origin.dom.addEventListener('click', () => events.fire('pivot.toggleOrigin'));
 		upload.dom.addEventListener('click', () => events.fire('upload.modelAndViews'));
+		printRegion.dom.addEventListener('click', () => events.fire('tool.printRegion'));
 
 		events.on('edit.canUndo', (value: boolean) => {
 			undo.enabled = value;
@@ -205,6 +213,7 @@ class BottomToolbar extends Container {
 			scale.class[toolName === 'scale' ? 'add' : 'remove']('active');
 			measure.class[toolName === 'measure' ? 'add' : 'remove']('active');
 			eyedropper.class[toolName === 'eyedropperSelection' ? 'add' : 'remove']('active');
+			printRegion.class[toolName === 'printRegion' ? 'add' : 'remove']('active');
 		});
 
 		events.on('tool.coordSpace', (space: 'local' | 'world') => {
@@ -233,6 +242,7 @@ class BottomToolbar extends Container {
 		tooltips.register(origin, localize('tooltip.bottom-toolbar.bound-center'));
 		tooltips.register(eyedropper, localize('tooltip.bottom-toolbar.eyedropper'));
 		tooltips.register(upload, localize('tooltip.upload-model'));
+		tooltips.register(printRegion, '打印区域');
 	}
 }
 
