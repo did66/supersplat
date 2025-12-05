@@ -1,22 +1,21 @@
-@use 'colors.scss' as *;
+@use 'colors.scss'as *;
 
 #bottom-toolbar {
     position: absolute;
     left: 50%;
-    bottom: 24px;
-    height: 54px;
+    top: 132px;
+    height: 40px;
     transform: translate(-50%, 0);
     padding: 0px 8px;
-    border-radius: 8px;
-
-    background-color: $bcg-dark;
-
+    border-radius: 6px;
     display: flex;
     flex-direction: row;
     align-items: center;
 }
 
-.bottom-toolbar-button, .bottom-toolbar-tool, .bottom-toolbar-toggle {
+.bottom-toolbar-button,
+.bottom-toolbar-tool,
+.bottom-toolbar-toggle {
     width: 38px;
     height: 38px;
     margin: 0px 1px;
