@@ -82,16 +82,31 @@ class GaussianFilter {
 		let splat: Splat = null;
 		let state: Uint8Array = null;
 		let opacity: Float32Array = null;
+		let positions: Float32Array = null;
+		let worldTransform: Mat4 = null;
+		const tempVec = new Vec3();
 
 		this.set = (s: Splat) => {
 			splat = s;
 			state = splat.splatData.getProp('state') as Uint8Array;
 			opacity = splat.splatData.getProp('opacity') as Float32Array;
+			const x = splat.splatData.getProp('x') as Float32Array;
+			const y = splat.splatData.getProp('y') as Float32Array;
+			const z = splat.splatData.getProp('z') as Float32Array;
+			// 合并位置数据
+			positions = new Float32Array(x.length * 3);
+			for (let i = 0; i < x.length; i++) {
+				positions[i * 3 + 0] = x[i];
+				positions[i * 3 + 1] = y[i];
+				positions[i * 3 + 2] = z[i];
+			}
+			worldTransform = splat.worldTransform;
 		};
 
 		const onlySelected = serializeSettings.selected ?? false;
 		const minOpacity = serializeSettings.minOpacity ?? 0;
 		const removeInvalid = serializeSettings.removeInvalid ?? false;
+		const printRegion = serializeSettings.printRegion;
 
 		this.test = (i: number) => {
 			// splat is deleted, always removed
@@ -107,6 +122,26 @@ class GaussianFilter {
 			// optionally filter based on opacity
 			if (minOpacity > 0 && sigmoid(opacity[i]) < minOpacity) {
 				return false;
+			}
+
+			// optionally filter by print region bounding box
+			if (printRegion) {
+				const x = positions[i * 3 + 0];
+				const y = positions[i * 3 + 1];
+				const z = positions[i * 3 + 2];
+
+				// 转换到世界空间
+				tempVec.set(x, y, z);
+				worldTransform.transformPoint(tempVec, tempVec);
+
+				// 检查是否在打印区域内
+				const min = printRegion.getMin();
+				const max = printRegion.getMax();
+				if (tempVec.x < min.x || tempVec.x > max.x ||
+					tempVec.y < min.y || tempVec.y > max.y ||
+					tempVec.z < min.z || tempVec.z > max.z) {
+					return false;
+				}
 			}
 
 			if (removeInvalid) {
