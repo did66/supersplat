@@ -225,5 +225,6 @@
     "tooltip.timeline.remove-key": "キーフレームを削除",
     "tooltip.timeline.frame-rate": "フレームレート",
     "tooltip.timeline.total-frames": "総フレーム数",
-    "tooltip.timeline.smoothness": "スムーズさ"
+    "tooltip.timeline.smoothness": "スムーズさ",
+    "tooltip.upload-model": "モデルをアップロード"
 }

@@ -225,5 +225,6 @@
     "tooltip.timeline.remove-key": "Eliminar clave",
     "tooltip.timeline.frame-rate": "Velocidad de fotogramas",
     "tooltip.timeline.total-frames": "Fotogramas totales",
-    "tooltip.timeline.smoothness": "Suavidad"
+    "tooltip.timeline.smoothness": "Suavidad",
+    "tooltip.upload-model": "Subir modelo"
 }

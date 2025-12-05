@@ -225,5 +225,6 @@
     "tooltip.timeline.remove-key": "Remove Key",
     "tooltip.timeline.frame-rate": "Frame Rate",
     "tooltip.timeline.total-frames": "Total Frames",
-    "tooltip.timeline.smoothness": "Smoothness"
+    "tooltip.timeline.smoothness": "Smoothness",
+    "tooltip.upload-model": "Upload Model"
 }
