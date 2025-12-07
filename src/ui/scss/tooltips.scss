@@ -1,4 +1,4 @@
-@use 'colors.scss' as *;
+@use 'colors.scss'as *;
 
 .tooltips {
     position: absolute;
@@ -8,6 +8,6 @@
 }
 
 .tooltips-content {
-    color: $clr-default;
+    color: $text-primary;
     margin: 2px;
 }

@@ -1,5 +1,5 @@
 @use 'pcui-theme-grey.scss';
-@use 'colors.scss' as *;
+@use 'colors.scss'as *;
 @use 'tooltips.scss';
 @use 'panel.scss';
 @use 'menu-panel.scss';
@@ -71,7 +71,7 @@ body {
     background-color: $bcg-darker;
 }
 
-#sep-container > span {
+#sep-container>span {
     color: white;
 }
 
@@ -169,6 +169,7 @@ body {
     width: 100%;
     height: 100%;
     cursor: crosshair;
+
     &.noevents {
         pointer-events: none;
     }
@@ -198,10 +199,52 @@ body {
     pointer-events: none;
 }
 
+.pcui-button {
+    background-color: $bcg-dark;
+    color: $text-primary;
+}
+
+.pcui-input-element {
+    background-color: $bcg-dark-f5;
+    border: none;
+    color: $text-primary;
+
+    input {
+        color: $text-primary;
+    }
+
+    &::hover {
+        &::after {
+            color: $text-darkest;
+        }
+    }
+
+    &:not(.pcui-disabled, .pcui-readonly):not(.pcui-error):hover {
+        box-shadow: none;
+    }
+
+    &:not(.pcui-disabled, .pcui-readonly):hover {
+        background-color: $bcg-dark-f5;
+        color: $text-primary;
+    }
+}
+
+.pcui-numeric-input-slider-control {
+    border: none;
+    background: none;
+}
+
+.pcui-button:not(.pcui-disabled, .pcui-readonly):hover,
+.pcui-button:not(.pcui-disabled, .pcui-readonly):focus {
+    background: none;
+    color: $text-primary;
+}
+
 // placeholder
 .pcui-input-element[placeholder] {
     &::after {
         color: $text-darkest;
+        background-color: $bcg-dark-f5;
     }
 }
 
@@ -216,15 +259,19 @@ body {
     width: 8px;
     height: 8px;
 }
+
 ::-webkit-scrollbar-track {
     background: #20292b;
 }
+
 ::-webkit-scrollbar-thumb {
     background: #5b7073;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: #f60;
 }
+
 ::-webkit-scrollbar-corner {
     background: #2c393c;
 }
