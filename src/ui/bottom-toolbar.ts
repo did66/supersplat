@@ -2,19 +2,27 @@ import { Button, Element, Container } from '@playcanvas/pcui';
 
 import { Events } from '../events';
 import { localize } from './localization';
-import redoSvg from './svg/redo.svg';
-import brushSvg from './svg/select-brush.svg';
-import eyedropperSvg from './svg/select-eyedropper.svg';
-import floodSvg from './svg/select-flood.svg';
-import lassoSvg from './svg/select-lasso.svg';
-import pickerSvg from './svg/select-picker.svg';
-import polygonSvg from './svg/select-poly.svg';
-import sphereSvg from './svg/select-sphere.svg';
-import boxSvg from './svg/show-hide-splats.svg';
-import undoSvg from './svg/undo.svg';
 import { Tooltips } from './tooltips';
+import brushSvg from './svg/brush.svg';
 import cropSvg from './svg/crop.svg';
+import eyedropperSvg from './svg/select-eyedropper.svg';
+import floodSvg from './svg/flood.svg';
+import lassoSvg from './svg/lasso.svg';
+import pickerSvg from './svg/picker.svg';
+import polygonSvg from './svg/polygon.svg';
 import publishSvg from './svg/publish.svg';
+import redoSvg from './svg/redo.svg';
+import sphereSvg from './svg/coordSpace.svg';
+import boxSvg from './svg/box.svg';
+import undoSvg from './svg/undo.svg';
+import translateSvg from './svg/translate.svg';
+import rotateSvg from './svg/rotate.svg';
+import scaleSvg from './svg/scale.svg';
+import deleteSvg from './svg/delete-my.svg';
+import coordSpaceSvg from './svg/coordSpace.svg';
+import printRegionSvg from './svg/printRegion.svg';
+
+
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
 	return new DOMParser().parseFromString(decodedStr, 'image/svg+xml').documentElement;
@@ -84,6 +92,10 @@ class BottomToolbar extends Container {
 			id: 'bottom-toolbar-eyedropper',
 			class: 'bottom-toolbar-tool'
 		});
+		const deleteArea = new Button({
+			id: 'bottom-toolbar-delete-area',
+			class: 'bottom-toolbar-tool'
+		});
 
 		// const crop = new Button({
 		//     id: 'bottom-toolbar-crop',
@@ -93,20 +105,21 @@ class BottomToolbar extends Container {
 		const translate = new Button({
 			id: 'bottom-toolbar-translate',
 			class: 'bottom-toolbar-tool',
-			icon: 'E111'
+
 		});
+		translate.dom.appendChild(createSvg(translateSvg));
 
 		const rotate = new Button({
 			id: 'bottom-toolbar-rotate',
 			class: 'bottom-toolbar-tool',
-			icon: 'E113'
 		});
+		rotate.dom.appendChild(createSvg(rotateSvg));
 
 		const scale = new Button({
 			id: 'bottom-toolbar-scale',
 			class: 'bottom-toolbar-tool',
-			icon: 'E112'
 		});
+		scale.dom.appendChild(createSvg(scaleSvg));
 
 		const measure = new Button({
 			id: 'bottom-toolbar-measure',
@@ -117,8 +130,8 @@ class BottomToolbar extends Container {
 		const coordSpace = new Button({
 			id: 'bottom-toolbar-coord-space',
 			class: 'bottom-toolbar-toggle',
-			icon: 'E118'
 		});
+		coordSpace.dom.appendChild(createSvg(coordSpaceSvg));
 
 		const origin = new Button({
 			id: 'bottom-toolbar-origin',
@@ -146,33 +159,57 @@ class BottomToolbar extends Container {
 		box.dom.appendChild(createSvg(boxSvg));
 		lasso.dom.appendChild(createSvg(lassoSvg));
 		eyedropper.dom.appendChild(createSvg(eyedropperSvg));
+		deleteArea.dom.appendChild(createSvg(deleteSvg));
 		// crop.dom.appendChild(createSvg(cropSvg));
 		upload.dom.appendChild(createSvg(publishSvg));
-		printRegion.dom.appendChild(createSvg(cropSvg));
+		printRegion.dom.appendChild(createSvg(printRegionSvg));
 
-		this.append(undo);
-		this.append(redo);
-		// this.append(new Element({ class: 'bottom-toolbar-separator' }));
-		this.append(picker);
-		this.append(lasso);
-		this.append(polygon);
-		this.append(brush);
-		this.append(flood);
-		this.append(eyedropper);
-		// this.append(new Element({ class: 'bottom-toolbar-separator' }));
-		this.append(sphere);
-		this.append(box);
-		this.append(printRegion);
-		// this.append(crop);
-		// this.append(new Element({ class: 'bottom-toolbar-separator' }));
-		this.append(translate);
-		this.append(rotate);
-		this.append(scale);
-		// this.append(new Element({ class: 'bottom-toolbar-separator' }));
-		// this.append(measure);
-		// this.append(coordSpace);
-		// this.append(origin);
-		this.append(upload);
+		// 第一组：撤销/重做（左右箭头）
+		const group1 = new Container({
+			class: 'bottom-toolbar-group'
+		});
+		group1.append(undo);
+		group1.append(redo);
+
+		// 第二组：移动/旋转/缩放（平移、旋转、扩展）
+		const group2 = new Container({
+			class: 'bottom-toolbar-group'
+		});
+		group2.append(translate);
+		group2.append(rotate);
+		group2.append(scale);
+
+		// 第三组：选择工具组（选择、多边形、画笔、填充、套索、取色器）
+		const group3 = new Container({
+			class: 'bottom-toolbar-group'
+		});
+		group3.append(picker);
+		group3.append(lasso);
+		group3.append(polygon);
+		group3.append(brush);
+		group3.append(flood);
+		group3.append(deleteArea);
+		// group3.append(eyedropper);
+
+		// 第四组：坐标系/3D视图（地球仪、3D立方体）
+		const group4 = new Container({
+			class: 'bottom-toolbar-group'
+		});
+		group4.append(sphere);
+		group4.append(box);
+
+		// 第五组：打印区域（虚线方框）
+		const group5 = new Container({
+			class: 'bottom-toolbar-group'
+		});
+		group5.append(printRegion);
+		group5.append(upload);
+
+		this.append(group1);
+		this.append(group2);
+		this.append(group3);
+		this.append(group4);
+		this.append(group5);
 
 		undo.dom.addEventListener('click', () => events.fire('edit.undo'));
 		redo.dom.addEventListener('click', () => events.fire('edit.redo'));

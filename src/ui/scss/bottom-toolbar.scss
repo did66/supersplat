@@ -11,6 +11,17 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    gap: 3px;
+}
+
+.bottom-toolbar-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: $bcg-primary;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
 }
 
 .bottom-toolbar-button,
@@ -18,9 +29,13 @@
 .bottom-toolbar-toggle {
     width: 40px;
     height: 40px;
-    margin: 0px 1px;
+    margin: 0px;
     padding: 0px;
     border: 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
 
     &::before {
         font-size: 16px !important;
@@ -46,7 +61,7 @@
 }
 
 .bottom-toolbar-tool {
-    background-color: $bcg-primary;
+    background-color: transparent;
 
     svg {
         color: $clr-default
@@ -62,7 +77,8 @@
     }
 
     &.disabled {
-        background-color: $bcg-dark;
+        background-color: transparent;
+        opacity: 0.5;
 
         svg {
             color: $clr-disabled;
