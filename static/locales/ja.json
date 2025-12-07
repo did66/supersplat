@@ -210,6 +210,7 @@
     "tooltip.bottom-toolbar.brush": "ブラシ選択 ( B )",
     "tooltip.bottom-toolbar.flood": "フラッド選択 ( O )",
     "tooltip.bottom-toolbar.eyedropper": "スポイト選択 ( E )",
+    "tooltip.bottom-toolbar.delete": "選択を削除 ( Delete )",
     "tooltip.bottom-toolbar.sphere": "球で選択",
     "tooltip.bottom-toolbar.box": "箱で選択",
     "tooltip.bottom-toolbar.translate": "移動 ( 1 )",

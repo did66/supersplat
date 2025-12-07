@@ -210,6 +210,7 @@
     "tooltip.bottom-toolbar.brush": "Sélection avec pinceau ( B )",
     "tooltip.bottom-toolbar.flood": "Sélection par remplissage ( O )",
     "tooltip.bottom-toolbar.eyedropper": "Sélection avec pipette ( E )",
+    "tooltip.bottom-toolbar.delete": "Supprimer la sélection ( Delete )",
     "tooltip.bottom-toolbar.sphere": "Sélection avec sphère",
     "tooltip.bottom-toolbar.box": "Sélection de boîte",
     "tooltip.bottom-toolbar.translate": "Translation ( 1 )",

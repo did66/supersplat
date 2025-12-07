@@ -210,6 +210,7 @@
     "tooltip.bottom-toolbar.brush": "Выделение кистью ( B )",
     "tooltip.bottom-toolbar.flood": "Заливка выделением ( O )",
     "tooltip.bottom-toolbar.eyedropper": "Выделение пипеткой ( E )",
+    "tooltip.bottom-toolbar.delete": "Удалить выделение ( Delete )",
     "tooltip.bottom-toolbar.sphere": "Выделение сферой",
     "tooltip.bottom-toolbar.box": "Выделение прямоугольником",
     "tooltip.bottom-toolbar.translate": "Перемещение ( 1 )",

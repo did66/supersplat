@@ -210,6 +210,7 @@
     "tooltip.bottom-toolbar.brush": "브러시 선택 ( B )",
     "tooltip.bottom-toolbar.flood": "플러드 선택 ( O )",
     "tooltip.bottom-toolbar.eyedropper": "스포이드 선택 ( E )",
+    "tooltip.bottom-toolbar.delete": "선택 삭제 ( Delete )",
     "tooltip.bottom-toolbar.sphere": "구 선택",
     "tooltip.bottom-toolbar.box": "상자 선택",
     "tooltip.bottom-toolbar.translate": "이동 ( 1 )",

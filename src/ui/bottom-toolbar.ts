@@ -229,6 +229,7 @@ class BottomToolbar extends Container {
 		origin.dom.addEventListener('click', () => events.fire('pivot.toggleOrigin'));
 		upload.dom.addEventListener('click', () => events.fire('upload.modelAndViews'));
 		printRegion.dom.addEventListener('click', () => events.fire('tool.printRegion'));
+		deleteArea.dom.addEventListener('click', () => events.fire('select.delete'));
 
 		events.on('edit.canUndo', (value: boolean) => {
 			undo.enabled = value;
@@ -278,6 +279,7 @@ class BottomToolbar extends Container {
 		tooltips.register(coordSpace, localize('tooltip.bottom-toolbar.local-space'));
 		tooltips.register(origin, localize('tooltip.bottom-toolbar.bound-center'));
 		tooltips.register(eyedropper, localize('tooltip.bottom-toolbar.eyedropper'));
+		tooltips.register(deleteArea, localize('tooltip.bottom-toolbar.delete'));
 		tooltips.register(upload, localize('tooltip.upload-model'));
 		tooltips.register(printRegion, '打印区域');
 	}

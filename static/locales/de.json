@@ -210,6 +210,7 @@
 	"tooltip.bottom-toolbar.brush": "Pinselselektion ( B )",
 	"tooltip.bottom-toolbar.flood": "Füllselektion ( O )",
 	"tooltip.bottom-toolbar.eyedropper": "Pipettenselektion ( E )",
+	"tooltip.bottom-toolbar.delete": "Auswahl löschen ( Delete )",
 	"tooltip.bottom-toolbar.sphere": "Kugelselektion",
 	"tooltip.bottom-toolbar.box": "Kastenselektion",
 	"tooltip.bottom-toolbar.translate": "Verschieben ( 1 )",
