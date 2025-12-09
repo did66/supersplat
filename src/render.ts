@@ -357,7 +357,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				});
 
 				// 同时下载文件（保持原有功能）
-				// downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
+				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
 				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
@@ -478,9 +478,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 		try {
 			// 检查是否在 iframe 中
-			if (window.parent === window) {
-				throw new Error('Not in an iframe. Cannot send message to parent.');
-			}
+			// if (window.parent === window) {
+			// 	throw new Error('Not in an iframe. Cannot send message to parent.');
+			// }
 
 			// 准备数据
 			const data = await events.invoke('prepare.modelAndViews') as {
