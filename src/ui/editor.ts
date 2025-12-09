@@ -248,6 +248,34 @@ class EditorUI {
 		});
 
 		events.on('upload.modelAndViews', async () => {
+			// 检查是否有打印区域
+			const printRegion = events.invoke('printRegion.getBound') as any | null;
+			const isPrintRegionActive = events.invoke('tool.active') === 'printRegion';
+
+			if (printRegion && isPrintRegionActive) {
+				// 1. 先选择打印区域内的内容
+				const center = printRegion.center;
+				const halfExtents = printRegion.halfExtents;
+				const boxParams = [
+					center.x,
+					center.y,
+					center.z,
+					halfExtents.x * 2,  // lenx
+					halfExtents.y * 2,  // leny
+					halfExtents.z * 2   // lenz
+				];
+				events.fire('select.byBox', 'set', boxParams);
+
+				// 2. 反选（这样会选中打印区域外的内容）
+				events.fire('select.invert');
+
+				// 3. 删除反选的内容（删除打印区域外的内容）
+				events.fire('select.delete');
+
+				// 4. 隐藏打印选择框（停用打印区域工具）
+				events.fire('tool.printRegion');
+			}
+
 			// 通过 postMessage 发送给父组件
 			try {
 				await events.invoke('send.modelAndViewsToParent');
