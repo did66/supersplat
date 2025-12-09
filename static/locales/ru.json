@@ -219,6 +219,7 @@
     "tooltip.bottom-toolbar.measure": "Измерение",
     "tooltip.bottom-toolbar.local-space": "Использовать локальную ориентацию",
     "tooltip.bottom-toolbar.bound-center": "Использовать центр границ",
+    "tooltip.bottom-toolbar.print-region": "Область печати",
     "tooltip.timeline.prev-key": "Перейти к предыдущему ключевому кадру",
     "tooltip.timeline.play": "Воспроизвести/Остановить",
     "tooltip.timeline.next-key": "Перейти к следующему ключевому кадру",

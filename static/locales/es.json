@@ -219,6 +219,7 @@
     "tooltip.bottom-toolbar.measure": "Medición",
     "tooltip.bottom-toolbar.local-space": "Usar orientación local",
     "tooltip.bottom-toolbar.bound-center": "Usar centro de límites",
+    "tooltip.bottom-toolbar.print-region": "Región de impresión",
     "tooltip.timeline.prev-key": "Saltar al fotograma clave anterior",
     "tooltip.timeline.play": "Reproducir/Detener",
     "tooltip.timeline.next-key": "Saltar al siguiente fotograma clave",

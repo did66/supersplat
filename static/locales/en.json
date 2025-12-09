@@ -219,6 +219,7 @@
     "tooltip.bottom-toolbar.measure": "Measurement",
     "tooltip.bottom-toolbar.local-space": "Use Local Orientation",
     "tooltip.bottom-toolbar.bound-center": "Use Bound Center",
+    "tooltip.bottom-toolbar.print-region": "Print Region",
     "tooltip.timeline.prev-key": "Jump to Previous Keyframe",
     "tooltip.timeline.play": "Play/Stop",
     "tooltip.timeline.next-key": "Jump to Next Keyframe",

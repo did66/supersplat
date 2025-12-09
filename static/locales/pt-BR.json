@@ -219,6 +219,7 @@
     "tooltip.bottom-toolbar.measure": "Medir",
     "tooltip.bottom-toolbar.local-space": "Usar Orientação Local",
     "tooltip.bottom-toolbar.bound-center": "Usar Centro da Cena",
+    "tooltip.bottom-toolbar.print-region": "Região de Impressão",
     "tooltip.timeline.prev-key": "Ir para o Quadro Anterior",
     "tooltip.timeline.play": "Tocar/Parar",
     "tooltip.timeline.next-key": "Ir para o Próximo Quadro",

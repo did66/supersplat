@@ -219,6 +219,7 @@
     "tooltip.bottom-toolbar.measure": "측정",
     "tooltip.bottom-toolbar.local-space": "로컬 공간",
     "tooltip.bottom-toolbar.bound-center": "바운드 중심 사용",
+    "tooltip.bottom-toolbar.print-region": "인쇄 영역",
     "tooltip.timeline.prev-key": "이전 키로 이동",
     "tooltip.timeline.play": "재생/정지",
     "tooltip.timeline.next-key": "다음 키로 이동",

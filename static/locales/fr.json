@@ -219,6 +219,7 @@
     "tooltip.bottom-toolbar.measure": "Mesure",
     "tooltip.bottom-toolbar.local-space": "Espace local gizmo",
     "tooltip.bottom-toolbar.bound-center": "Utiliser le centre de la limite",
+    "tooltip.bottom-toolbar.print-region": "Zone d'impression",
     "tooltip.timeline.prev-key": "Aller à la clé précédente",
     "tooltip.timeline.play": "Jouer/Arrêter",
     "tooltip.timeline.next-key": "Aller à la clé suivante",

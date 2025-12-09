@@ -219,6 +219,7 @@
 	"tooltip.bottom-toolbar.measure": "测量",
 	"tooltip.bottom-toolbar.local-space": "局部坐标系",
 	"tooltip.bottom-toolbar.bound-center": "使用边界中心",
+	"tooltip.bottom-toolbar.print-region": "打印区域",
 	"tooltip.timeline.prev-key": "上一个关键帧",
 	"tooltip.timeline.play": "播放/停止",
 	"tooltip.timeline.next-key": "下一个关键帧",

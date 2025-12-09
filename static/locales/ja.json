@@ -219,6 +219,7 @@
     "tooltip.bottom-toolbar.measure": "測定",
     "tooltip.bottom-toolbar.local-space": "ローカル座標へ切り替え",
     "tooltip.bottom-toolbar.bound-center": "バウンディングボックスの中心を使用",
+    "tooltip.bottom-toolbar.print-region": "印刷領域",
     "tooltip.timeline.prev-key": "前のキーフレームに移動",
     "tooltip.timeline.play": "再生/停止",
     "tooltip.timeline.next-key": "次のキーフレームに移動",

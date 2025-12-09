@@ -281,7 +281,7 @@ class BottomToolbar extends Container {
 		tooltips.register(eyedropper, localize('tooltip.bottom-toolbar.eyedropper'));
 		tooltips.register(deleteArea, localize('tooltip.bottom-toolbar.delete'));
 		tooltips.register(upload, localize('tooltip.upload-model'));
-		tooltips.register(printRegion, '打印区域');
+		tooltips.register(printRegion, localize('tooltip.bottom-toolbar.print-region'));
 	}
 }
 
