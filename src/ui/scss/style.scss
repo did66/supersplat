@@ -248,6 +248,11 @@ body {
     }
 }
 
+.pcui-input-element:not(.pcui-disabled, .pcui-readonly).pcui-focus {
+    background-color: $bcg-dark-f5;
+    box-shadow: none;
+}
+
 .pcui-vector-input {
     margin-left: 6px;
     margin-right: 6px;
