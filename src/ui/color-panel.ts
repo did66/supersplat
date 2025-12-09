@@ -25,7 +25,7 @@ class ColorPanel extends Container {
 		args = {
 			...args,
 			id: 'color-panel',
-			class: 'panel',
+			// class: 'panel',
 			// hidden: true
 		};
 
@@ -52,7 +52,7 @@ class ColorPanel extends Container {
 			text: localize('panel.colors')
 		});
 
-		header.append(icon);
+		// header.append(icon);
 		header.append(label);
 
 		// tint
