@@ -134,7 +134,7 @@ class EditorUI {
 		canvasContainer.append(viewPanel);
 		// canvasContainer.append(colorPanel);
 		canvasContainer.append(bottomToolbar);
-		canvasContainer.append(rightToolbar);
+		// canvasContainer.append(rightToolbar);
 		// canvasContainer.append(modeToggle);
 		// canvasContainer.append(menu);
 

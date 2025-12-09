@@ -143,8 +143,8 @@ body {
     position: absolute;
     width: 140px;
     height: 140px;
-    right: 0px;
-    top: 0px;
+    right: 10%;
+    top: 122px;
     pointer-events: none;
 }
 
@@ -238,6 +238,8 @@ body {
 .pcui-button:not(.pcui-disabled, .pcui-readonly):focus {
     background: none;
     color: $text-primary;
+    box-shadow: none;
+    opacity: 0.5;
 }
 
 // placeholder

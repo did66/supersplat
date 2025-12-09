@@ -20,8 +20,8 @@
     align-items: center;
     background-color: $bcg-primary;
     border-radius: 6px;
-    padding: 2px;
     gap: 2px;
+	overflow: hidden;
 }
 
 .bottom-toolbar-button,
