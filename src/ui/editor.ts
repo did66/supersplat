@@ -120,7 +120,7 @@ class EditorUI {
 		// bottom toolbar
 		const scenePanel = new ScenePanel(events, tooltips);
 		const viewPanel = new ViewPanel(events, tooltips);
-		const colorPanel = new ColorPanel(events, tooltips);
+		// const colorPanel = new ColorPanel(events, tooltips);
 		const bottomToolbar = new BottomToolbar(events, tooltips);
 		const rightToolbar = new RightToolbar(events, tooltips);
 		const modeToggle = new ModeToggle(events, tooltips);
@@ -132,7 +132,7 @@ class EditorUI {
 		canvasContainer.append(toolsContainer);
 		canvasContainer.append(scenePanel);
 		canvasContainer.append(viewPanel);
-		canvasContainer.append(colorPanel);
+		// canvasContainer.append(colorPanel);
 		canvasContainer.append(bottomToolbar);
 		canvasContainer.append(rightToolbar);
 		// canvasContainer.append(modeToggle);

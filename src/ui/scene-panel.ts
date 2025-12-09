@@ -8,6 +8,7 @@ import sceneNewSvg from './svg/new.svg';
 import collapsedSvg from './svg/collapsed.svg';
 import { Tooltips } from './tooltips';
 import { Transform } from './transform';
+import { ColorPanel } from './color-panel';
 
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
@@ -81,6 +82,13 @@ class ScenePanel extends Container {
 		tooltips.register(sceneImport, 'Import Scene', 'right');
 		tooltips.register(sceneNew, 'New Scene', 'top');
 
+		const colorPanelBox = new Container({
+			class: 'color-panel-box'
+		});
+		const colorPanel = new ColorPanel(events, tooltips);
+		colorPanelBox.append(colorPanel);
+
+
 		const splatList = new SplatList(events);
 
 		const splatListContainer = new Container({
@@ -111,10 +119,11 @@ class ScenePanel extends Container {
 		// this.append(splatListContainer);
 		this.append(transformHeader);
 		this.append(new Transform(events));
-		this.append(new Element({
-			class: 'panel-header',
-			height: 20
-		}));
+		this.append(colorPanelBox);
+		// this.append(new Element({
+		// 	class: 'panel-header',
+		// 	height: 20
+		// }));
 	}
 }
 

@@ -17,9 +17,10 @@
         padding: 10px 0;
         border-bottom: 1px solid $bcg-dark-f5;
 
-        &>.panel-header-icon {
+        &>.panel-import-button {
             width: 24px;
             height: 24px;
+            cursor: pointer;
         }
 
         &>.panel-header-label {
