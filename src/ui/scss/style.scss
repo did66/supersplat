@@ -253,6 +253,11 @@ body {
     margin-right: 6px;
 }
 
+.pcui-label {
+    color: $text-primary;
+    margin: 0;
+}
+
 /* scrollbar styling */
 
 ::-webkit-scrollbar {

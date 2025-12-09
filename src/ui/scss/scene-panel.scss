@@ -2,10 +2,17 @@
     top: 102px;
     left: 24px;
     width: 320px;
+    border-radius: 10px;
+    background: #FFF;
+    box-shadow: 0 6px 8px 0 #F5F5F5;
+    padding: 0 20px;
 }
 
 .collapsed #scene-panel {
-    display: none;
+    width: 91px;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 0 !important;
 }
 
 .splat-list-container {

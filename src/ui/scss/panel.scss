@@ -1,28 +1,28 @@
-@use 'colors.scss' as *;
+@use 'colors.scss'as *;
 
 .panel {
     position: absolute;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
 
     background-color: $bcg-primary;
 
-    & > .panel-header {
+
+
+    &>.panel-header-top {
         display: flex;
-        flex-direction: row;
         align-items: center;
-        padding: 2px;
-
+        justify-content: space-between;
         background-color: $bcg-dark;
+        padding: 10px 0;
+        border-bottom: 1px solid $bcg-dark-f5;
 
-        & > .panel-header-icon {
-            font-family: pc-icon;
-            font-weight: bold;
-            font-size: 13px;
-            color: $clr-hilight;
+        &>.panel-header-icon {
+            width: 24px;
+            height: 24px;
         }
 
-        & > .panel-header-label {
+        &>.panel-header-label {
             color: $text-primary;
             font-weight: bold;
             flex-grow: 1;
@@ -35,7 +35,7 @@
         font-weight: bold;
         font-size: 13px;
         color: $clr-hilight;
-    
+
         padding: 4px;
         flex-grow: 0;
         flex-shrink: 0;
@@ -47,7 +47,7 @@
         svg {
             color: $clr-hilight;
         }
-    
+
         &:hover {
             color: #ff9900;
             background-color: $bcg-darkest;
@@ -55,9 +55,20 @@
         }
     }
 
+    .panel-collapse-button {
+        cursor: pointer;
+        padding: 0 5px;
+    }
+
+
     .panel-header-spacer {
         flex-grow: 1;
         padding: 0px;
         margin: 0px;
+    }
+
+    .transform-header-title {
+        font-weight: 600;
+        margin-bottom: 10px;
     }
 }
