@@ -4,8 +4,14 @@ import { Color } from 'playcanvas';
 import { Events } from '../events';
 import { localize } from './localization';
 import { Tooltips } from './tooltips';
+import resetIconSvg from './svg/resetIcon.svg';
+
 import { SetSplatColorAdjustmentOp } from '../edit-ops';
 import { Splat } from '../splat';
+const createSvg = (svgString: string) => {
+	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
+	return new DOMParser().parseFromString(decodedStr, 'image/svg+xml').documentElement;
+};
 
 // pcui slider doesn't include start and end events
 class MyFancySliderInput extends SliderInput {
@@ -48,8 +54,8 @@ class ColorPanel extends Container {
 		});
 
 		const label = new Label({
-			class: 'panel-header-label',
-			text: localize('panel.colors')
+			class: 'transform-header-title',
+			text: localize('panel.model-controls')
 		});
 
 		// header.append(icon);
@@ -66,13 +72,18 @@ class ColorPanel extends Container {
 			class: 'color-panel-row-label'
 		});
 
-		const tintPicker = new ColorPicker({
-			class: 'color-panel-row-picker',
-			value: [1, 1, 1]
+		const tintPickerBox = new Container({
+			class: 'color-panel-row-picker-box'
 		});
 
+		const tintPicker = new ColorPicker({
+			class: 'color-panel-row-picker',
+			value: [248 / 255, 243 / 255, 238 / 255]
+		});
+		tintPickerBox.append(tintPicker);
+
 		tintRow.append(tintLabel);
-		tintRow.append(tintPicker);
+		tintRow.append(tintPickerBox);
 
 		// temperature
 
@@ -209,17 +220,14 @@ class ColorPanel extends Container {
 		// control row
 
 		const controlRow = new Container({
-			class: 'color-panel-control-row'
+			class: 'color-panel-control-reset'
 		});
-
-		const reset = new Label({
-			class: 'panel-header-button',
-			text: '\uE304'
+		const resetLabel = new Label({
+			class: 'color-panel-control-reset-label',
+			text: localize('panel.colors.reset')
 		});
-
-		controlRow.append(new Label({ class: 'panel-header-spacer' }));
-		controlRow.append(reset);
-		controlRow.append(new Label({ class: 'panel-header-spacer' }));
+		controlRow.dom.appendChild(createSvg(resetIconSvg));
+		controlRow.append(resetLabel);
 
 		this.append(header);
 		this.append(tintRow);
@@ -241,7 +249,7 @@ class ColorPanel extends Container {
 		const updateUIFromState = (splat: Splat) => {
 			if (suppress) return;
 			suppress = true;
-			tintPicker.value = splat ? [splat.tintClr.r, splat.tintClr.g, splat.tintClr.b] : [1, 1, 1];
+			tintPicker.value = splat ? [splat.tintClr.r, splat.tintClr.g, splat.tintClr.b] : [248 / 255, 243 / 255, 238 / 255];
 			temperatureSlider.value = splat ? splat.temperature : 0;
 			saturationSlider.value = splat ? splat.saturation : 0;
 			brightnessSlider.value = splat ? splat.brightness : 0;
@@ -365,7 +373,7 @@ class ColorPanel extends Container {
 			});
 		});
 
-		reset.on('click', () => {
+		controlRow.on('click', () => {
 			if (selected) {
 				const op = new SetSplatColorAdjustmentOp({
 					splat: selected,
@@ -406,7 +414,7 @@ class ColorPanel extends Container {
 		events.on('splat.whitePoint', updateUIFromState);
 		events.on('splat.transparency', updateUIFromState);
 
-		tooltips.register(reset, localize('panel.colors.reset'), 'bottom');
+		// tooltips.register(controlRow, localize('panel.colors.reset'), 'bottom');
 
 		// handle panel visibility
 

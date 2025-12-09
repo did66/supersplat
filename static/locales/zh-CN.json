@@ -42,6 +42,7 @@
 	"panel.scene-manager.transform.rotation": "旋转",
 	"panel.scene-manager.transform.scale": "缩放",
 	"panel.colors": "颜色",
+	"panel.model-controls": "模型控制",
 	"panel.colors.tint": "色调",
 	"panel.colors.temperature": "温度",
 	"panel.colors.saturation": "饱和度",

@@ -42,6 +42,7 @@
 	"panel.scene-manager.transform.rotation": "Rotation",
 	"panel.scene-manager.transform.scale": "Skalierung",
 	"panel.colors": "Farbe",
+	"panel.model-controls": "Modellsteuerung",
 	"panel.colors.tint": "Färbung",
 	"panel.colors.temperature": "Temperatur",
 	"panel.colors.saturation": "Sättigung",

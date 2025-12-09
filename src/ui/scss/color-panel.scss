@@ -14,6 +14,14 @@
             flex-grow: 1;
         }
 
+        .color-panel-row-picker-box {
+            width: 220px;
+
+            .pcui-color-input {
+                margin: 0;
+            }
+        }
+
         &>.color-panel-row-picker {
             margin: 0px 0px;
             padding: 0px;
@@ -26,9 +34,21 @@
 
             &>.pcui-slider-container {
                 &>.pcui-slider-bar {
+                    position: relative;
+                    width: calc(100% - 15px);
+                    height: 5px;
+                    margin: 9px;
+                    background-color: $clr-bg-color;
+                    border: 1px solid $clr-bg-color;
+
                     &>.pcui-slider-handle {
-                        background-color: $clr-default;
+                        background-color: $clr-icon-hilight;
                         border-radius: 3px;
+                        width: 5px;
+                        height: 15px;
+                        border: 0;
+                        top: -5.5px;
+                        margin-left: -2.5px;
                     }
                 }
             }
@@ -39,5 +59,21 @@
         display: flex;
         flex-direction: row;
         background-color: $bcg-dark;
+    }
+
+    .color-panel-control-reset {
+        border-radius: 10px;
+        border: 1px solid #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 35px;
+        margin-top: 15px;
+		cursor: pointer;
+
+        .color-panel-control-reset-label {
+            padding-left: 5px;
+        }
     }
 }

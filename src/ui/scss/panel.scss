@@ -16,6 +16,7 @@
         background-color: $bcg-dark;
         padding: 10px 0;
         border-bottom: 1px solid $bcg-dark-f5;
+        margin-bottom: 20px;
 
         &>.panel-import-button {
             width: 24px;
@@ -71,5 +72,11 @@
     .transform-header-title {
         font-weight: 600;
         margin-bottom: 10px;
+    }
+
+    .color-panel-box {
+        padding-top: 20px;
+        margin-top: 20px;
+        border-top: 1px solid $bcg-dark-f5;
     }
 }

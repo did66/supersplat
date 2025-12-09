@@ -79,7 +79,7 @@ class ScenePanel extends Container {
 			events.invoke('doc.new');
 		});
 
-		tooltips.register(sceneImport, 'Import Scene', 'right');
+		tooltips.register(sceneImport, 'Import', 'right');
 		tooltips.register(sceneNew, 'New Scene', 'top');
 
 		const colorPanelBox = new Container({

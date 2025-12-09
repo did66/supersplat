@@ -1,4 +1,4 @@
-@use 'colors.scss' as *;
+@use 'colors.scss'as *;
 
 #view-panel {
     top: 50%;
@@ -11,17 +11,17 @@
         display: flex;
     }
 
-    & > .view-panel-row {
+    &>.view-panel-row {
         display: flex;
         flex-direction: row;
         padding: 2px;
         height: 28px;
 
-        & > .view-panel-row-label {
+        &>.view-panel-row-label {
             flex-grow: 1;
         }
 
-        & > .view-panel-row-toggle {
+        &>.view-panel-row-toggle {
             background-color: $bcg-dark;
 
             &::after {
@@ -37,34 +37,34 @@
             }
         }
 
-        & > .view-panel-row-slider {
+        &>.view-panel-row-slider {
             margin: 0px;
 
-            & > .pcui-slider-container {
-                & > .pcui-slider-bar {
-                    & > .pcui-slider-handle {
-                        background-color: $clr-default;
+            &>.pcui-slider-container {
+                &>.pcui-slider-bar {
+                    &>.pcui-slider-handle {
+                        background-color: $clr-icon-hilight;
                         border-radius: 3px;
                     }
                 }
             }
         }
 
-        & > .view-panel-row-pickers {
+        &>.view-panel-row-pickers {
             display: flex;
             flex-direction: row;
             margin: 2px 2px;
             width: 185px;
             justify-content: space-between;
 
-            & > .view-panel-row-picker {
+            &>.view-panel-row-picker {
                 margin: 0px 0px;
                 padding: 0px;
                 height: 24px;
             }
         }
 
-        & > .view-panel-row-select {
+        &>.view-panel-row-select {
             width: 187px;
             margin: 0;
         }
