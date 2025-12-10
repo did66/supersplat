@@ -176,6 +176,8 @@ class ScenePanel extends Container {
 		autoAreaButton.dom.appendChild(createSvg(autoareaSvg));
 		autoAreaButton.append(autoAreaLabel);
 
+
+
 		printBox.append(printTitle);
 		printBox.append(sizeRow);
 		printBox.append(autoAreaButton);
@@ -238,6 +240,9 @@ class ScenePanel extends Container {
 
 		// Initial update
 		updateSizeValues();
+
+		//打印点击
+		autoAreaButton.dom.addEventListener('click', () => events.fire('tool.printRegion'))
 
 
 
