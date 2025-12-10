@@ -238,6 +238,12 @@ class ScenePanel extends Container {
 			updateSizeValues();
 		});
 
+		// Listen to print size unit changes
+		events.on('printSize.unitChanged', (newUnit: number) => {
+			unit = newUnit;
+			updateSizeValues();
+		});
+
 		// Initial update
 		updateSizeValues();
 

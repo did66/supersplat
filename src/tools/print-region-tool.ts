@@ -87,7 +87,7 @@ class PrintRegionTool {
 		const sizesOptions = [
 			{
 				"label": "Small",
-				"value": "3",
+				"value": "4",
 				"unitPrice": 19.9,
 			},
 			{
@@ -184,6 +184,12 @@ class PrintRegionTool {
 		lenZ.on('change', () => {
 			this.printRegion.lenZ = lenZ.value;
 			events.fire('printRegion.changed', this.getPrintRegionBound());
+		});
+
+		// 尺寸选择器变化监听
+		sizeSelect.on('change', () => {
+			const unit = parseInt(sizeSelect.value);
+			events.fire('printSize.unitChanged', unit);
 		});
 
 		// 重置按钮
