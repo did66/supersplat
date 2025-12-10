@@ -104,7 +104,6 @@ class PrintRegionTool {
 
 		toolbar.append(new Container({
 			class: 'select-toolbar-label',
-			text: '打印区域'
 		}));
 		toolbar.append(lenX);
 		toolbar.append(lenY);
@@ -128,6 +127,34 @@ class PrintRegionTool {
 			this.printRegion.lenZ = lenZ.value;
 			events.fire('printRegion.changed', this.getPrintRegionBound());
 		});
+
+		let sizesOptions = [
+			{
+				"label": "Small",
+				"value": "3",
+				"unitPrice": 19.9,
+			},
+			{
+				"label": "Small+",
+				"value": "5",
+				"unitPrice": 59.9,
+			},
+			{
+				"label": "Medium",
+				"value": "7",
+				"unitPrice": 99.99,
+			},
+			{
+				"label": "Medium+",
+				"value": "9",
+				"unitPrice": 179.99,
+			},
+			{
+				"label": "Large",
+				"value": "12",
+				"unitPrice": 259.9,
+			}
+		]
 
 		// 重置按钮
 		resetButton.dom.addEventListener('pointerdown', (e) => {
