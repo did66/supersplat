@@ -84,7 +84,8 @@ class PrintRegionTool {
 			min: 0.01
 		});
 
-		const sizesOptions = [
+		// 默认的 sizesOptions，会被 postMessage 更新
+		let sizesOptions: Array<{ label: string; value: string; unitPrice: number }> = [
 			{
 				"label": "Small",
 				"value": "4",
@@ -184,6 +185,32 @@ class PrintRegionTool {
 		lenZ.on('change', () => {
 			this.printRegion.lenZ = lenZ.value;
 			events.fire('printRegion.changed', this.getPrintRegionBound());
+		});
+
+		// 更新 sizeSelect 选项的函数
+		const updateSizeSelectOptions = (newOptions: Array<{ label: string; value: string; unitPrice: number }>) => {
+			sizesOptions = newOptions;
+			sizeSelect.options = sizesOptions.map(option => ({
+				v: option.value,
+				t: `${option.value}cm`
+			}));
+			// 更新默认值
+			if (sizesOptions.length > 0) {
+				sizeSelect.value = sizesOptions[0].value;
+				// 触发 change 事件以更新 scene-panel 中的 unit
+				const unit = parseInt(sizeSelect.value);
+				events.fire('printSize.unitChanged', unit);
+			}
+		};
+
+		// 监听来自父窗口的 postMessage
+		window.addEventListener('message', (event: MessageEvent) => {
+			// 验证消息来源（可选，根据安全需求）
+			// if (event.origin !== window.location.origin) return;
+
+			if (event.data && event.data.type === 'SIZE_OPTIONS' && event.data.options) {
+				updateSizeSelectOptions(event.data.options);
+			}
 		});
 
 		// 尺寸选择器变化监听
