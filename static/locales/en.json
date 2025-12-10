@@ -41,6 +41,8 @@
 	"panel.scene-manager.transform.position": "Position",
 	"panel.scene-manager.transform.rotation": "Rotation",
 	"panel.scene-manager.transform.scale": "Scale",
+	"panel.scene-manager.print": "Print",
+	"panel.autoArea": "Auto Area",
 	"panel.colors": "Colors",
 	"panel.model-controls": "Model Controls",
 	"panel.colors.tint": "Tint",

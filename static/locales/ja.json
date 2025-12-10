@@ -41,6 +41,8 @@
 	"panel.scene-manager.transform.position": "位置",
 	"panel.scene-manager.transform.rotation": "回転",
 	"panel.scene-manager.transform.scale": "スケール",
+	"panel.scene-manager.print": "印刷",
+	"panel.autoArea": "自動領域",
 	"panel.colors": "色",
 	"panel.model-controls": "モデルコントロール",
 	"panel.colors.tint": "色合い",

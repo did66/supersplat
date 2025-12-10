@@ -41,6 +41,8 @@
 	"panel.scene-manager.transform.position": "위치",
 	"panel.scene-manager.transform.rotation": "회전",
 	"panel.scene-manager.transform.scale": "크기",
+	"panel.scene-manager.print": "인쇄",
+	"panel.autoArea": "자동 영역",
 	"panel.colors": "색상",
 	"panel.model-controls": "모델 컨트롤",
 	"panel.colors.tint": "색조",

@@ -41,6 +41,8 @@
 	"panel.scene-manager.transform.position": "Позиция",
 	"panel.scene-manager.transform.rotation": "Вращение",
 	"panel.scene-manager.transform.scale": "Масштаб",
+	"panel.scene-manager.print": "Печать",
+	"panel.autoArea": "Автоматическая область",
 	"panel.colors": "Цвета",
 	"panel.model-controls": "Управление моделью",
 	"panel.colors.tint": "Оттенок",
