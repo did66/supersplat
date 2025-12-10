@@ -2,7 +2,7 @@
  * 打印区域选择工具
  * 允许用户定义和调整打印区域的边界框
  */
-import { Button, Container, NumericInput } from '@playcanvas/pcui';
+import { Button, Container, NumericInput, SelectInput } from '@playcanvas/pcui';
 import { TranslateGizmo, Vec3 } from 'playcanvas';
 
 import { PrintRegionShape } from '../print-region-shape';
@@ -84,51 +84,7 @@ class PrintRegionTool {
 			min: 0.01
 		});
 
-		// 重置按钮
-		const resetButton = new Button({
-			text: '重置',
-			class: 'select-reset-button'
-		});
-
-		// 适配到选中Splat按钮
-		const fitToSelectionButton = new Button({
-			text: '适配选中',
-			class: 'select-toolbar-button'
-		});
-
-		// 导出打印区域按钮
-		const exportButton = new Button({
-			text: '导出',
-			class: 'select-toolbar-button'
-		});
-
-		toolbar.append(new Container({
-			class: 'select-toolbar-label',
-		}));
-		toolbar.append(lenX);
-		toolbar.append(lenY);
-		toolbar.append(lenZ);
-		toolbar.append(resetButton);
-		// toolbar.append(fitToSelectionButton);
-		// toolbar.append(exportButton);
-
-		canvasContainer.append(toolbar);
-
-		// 尺寸变化监听
-		lenX.on('change', () => {
-			this.printRegion.lenX = lenX.value;
-			events.fire('printRegion.changed', this.getPrintRegionBound());
-		});
-		lenY.on('change', () => {
-			this.printRegion.lenY = lenY.value;
-			events.fire('printRegion.changed', this.getPrintRegionBound());
-		});
-		lenZ.on('change', () => {
-			this.printRegion.lenZ = lenZ.value;
-			events.fire('printRegion.changed', this.getPrintRegionBound());
-		});
-
-		let sizesOptions = [
+		const sizesOptions = [
 			{
 				"label": "Small",
 				"value": "3",
@@ -154,7 +110,62 @@ class PrintRegionTool {
 				"value": "12",
 				"unitPrice": 259.9,
 			}
-		]
+		];
+
+		// 尺寸选择器
+		const sizeSelect = new SelectInput({
+			options: sizesOptions.map(option => ({
+				v: option.value,
+				t: `${option.value}cm`
+			})),
+			defaultValue: sizesOptions[0].value,
+			width: 80
+		});
+
+		// 重置按钮
+		const resetButton = new Button({
+			text: '重置',
+			class: 'select-reset-button'
+		});
+
+		// 适配到选中Splat按钮
+		const fitToSelectionButton = new Button({
+			text: '适配选中',
+			class: 'select-toolbar-button'
+		});
+
+		// 导出打印区域按钮
+		const exportButton = new Button({
+			text: '导出',
+			class: 'select-toolbar-button'
+		});
+
+		toolbar.append(new Container({
+			class: 'select-toolbar-label',
+		}));
+		toolbar.append(lenX);
+		toolbar.append(lenY);
+		toolbar.append(lenZ);
+		toolbar.append(sizeSelect);
+		toolbar.append(resetButton);
+		// toolbar.append(fitToSelectionButton);
+		// toolbar.append(exportButton);
+
+		canvasContainer.append(toolbar);
+
+		// 尺寸变化监听
+		lenX.on('change', () => {
+			this.printRegion.lenX = lenX.value;
+			events.fire('printRegion.changed', this.getPrintRegionBound());
+		});
+		lenY.on('change', () => {
+			this.printRegion.lenY = lenY.value;
+			events.fire('printRegion.changed', this.getPrintRegionBound());
+		});
+		lenZ.on('change', () => {
+			this.printRegion.lenZ = lenZ.value;
+			events.fire('printRegion.changed', this.getPrintRegionBound());
+		});
 
 		// 重置按钮
 		resetButton.dom.addEventListener('pointerdown', (e) => {
