@@ -24,4 +24,22 @@
         padding: 0px 16px;
         border-radius: 2px;
     }
+
+    .size-label {
+        padding-left: 40px;
+    }
+
+    .size-select-box {
+        position: relative;
+
+        .size-select-label {
+            position: absolute;
+            right: 27px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: $text-darkest;
+            z-index: 9;
+        }
+    }
 }

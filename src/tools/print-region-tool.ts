@@ -128,6 +128,18 @@ class PrintRegionTool {
 			width: 80
 		});
 
+		const sizeSelectBox = new Container({
+			class: 'size-select-box'
+		});
+		const sizeSelectLabel = new Label({
+			class: 'size-select-label',
+			text: 'H'
+		});
+
+
+		sizeSelectBox.append(sizeSelectLabel);
+		sizeSelectBox.append(sizeSelect);
+
 		// 重置按钮
 		const resetButton = new Button({
 			text: '重置',
@@ -153,7 +165,7 @@ class PrintRegionTool {
 		toolbar.append(lenY);
 		toolbar.append(lenZ);
 		toolbar.append(sizeLabel);
-		toolbar.append(sizeSelect);
+		toolbar.append(sizeSelectBox);
 		toolbar.append(resetButton);
 		// toolbar.append(fitToSelectionButton);
 		// toolbar.append(exportButton);
