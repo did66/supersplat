@@ -192,6 +192,10 @@ class PrintRegionTool {
 			events.fire('printSize.unitChanged', unit);
 		});
 
+		// 初始化时自动触发事件，确保 scene-panel 中的 unit 使用默认值
+		const initialUnit = parseInt(sizeSelect.value);
+		events.fire('printSize.unitChanged', initialUnit);
+
 		// 重置按钮
 		resetButton.dom.addEventListener('pointerdown', (e) => {
 			e.stopPropagation();

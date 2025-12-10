@@ -183,7 +183,7 @@ class ScenePanel extends Container {
 		printBox.append(autoAreaButton);
 
 		// Update size values based on scene bound
-		let unit = 3;// 高度 3cm
+		let unit = 3;// 高度，默认值，会被 print-region-tool 的 change 事件更新
 		const updateSizeValues = () => {
 			// Check if scene is available and has elements
 			if (typeof window !== 'undefined' && (window as any).scene) {
