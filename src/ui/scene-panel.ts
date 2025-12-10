@@ -241,8 +241,6 @@ class ScenePanel extends Container {
 		// Initial update
 		updateSizeValues();
 
-		//打印点击
-		autoAreaButton.dom.addEventListener('click', () => events.fire('tool.printRegion'))
 
 
 		const uploadButton = new Container({
@@ -255,8 +253,33 @@ class ScenePanel extends Container {
 		});
 
 		uploadButton.append(uploadLabel);
+		let printRegion: any | null = null;
+		// Update uploadButton disabled state based on print region
+		const updateUploadButtonState = () => {
+			printRegion = events.invoke('printRegion.getBound') as any | null;
+			if (printRegion) {
+				uploadButton.class.remove('disabled');
+			} else {
+				uploadButton.class.add('disabled');
+			}
+		};
+
+		// Listen to print region changes
+		events.on('printRegion.changed', () => {
+			updateUploadButtonState();
+		});
+
+		// Initial check
+		updateUploadButtonState();
 
 
+		//打印点击
+		autoAreaButton.dom.addEventListener('click', () => events.fire('tool.printRegion'))
+		//点击上传按钮
+		uploadButton.dom.addEventListener('click', () => {
+			if (!printRegion) return;
+			events.fire('upload.modelAndViews')
+		})
 		transformHeader.append(transformTitle);
 		// transformHeader.append(transformLabel);
 
