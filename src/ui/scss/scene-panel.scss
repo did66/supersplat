@@ -10,6 +10,7 @@
     box-sizing: border-box;
     max-height: 85vh;
     overflow-y: auto;
+    position: fixed;
 }
 
 .collapsed #scene-panel {

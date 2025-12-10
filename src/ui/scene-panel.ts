@@ -285,10 +285,6 @@ class ScenePanel extends Container {
 			events.fire('upload.modelAndViews')
 		})
 
-		const bottomBank = new Container({
-			class: 'bottom-bank'
-		});
-		transformHeader.append(transformTitle);
 		// transformHeader.append(transformLabel);
 
 		this.append(sceneHeader);
@@ -298,7 +294,6 @@ class ScenePanel extends Container {
 		this.append(colorPanelBox);
 		this.append(printBox);
 		this.append(uploadButton);
-		this.append(bottomBank);
 		// this.append(new Element({
 		// 	class: 'panel-header',
 		// 	height: 20
