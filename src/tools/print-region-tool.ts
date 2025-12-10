@@ -88,7 +88,7 @@ class PrintRegionTool {
 		let sizesOptions: Array<{ label: string; value: string; unitPrice: number }> = [
 			{
 				"label": "Small",
-				"value": "4",
+				"value": "3",
 				"unitPrice": 19.9,
 			},
 			{
