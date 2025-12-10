@@ -9,7 +9,6 @@ import collapsedSvg from './svg/collapsed.svg';
 import { Tooltips } from './tooltips';
 import { Transform } from './transform';
 import { ColorPanel } from './color-panel';
-import { Pivot } from '../pivot';
 import autoareaSvg from './svg/autoarea.svg';
 
 const createSvg = (svgString: string) => {
@@ -181,14 +180,30 @@ class ScenePanel extends Container {
 		printBox.append(sizeRow);
 		printBox.append(autoAreaButton);
 
-		// Update size values based on model scale
-		let unit = 3;
-		const updateSizeValues = (pivot: Pivot | null) => {
-			if (pivot && pivot.transform) {
-				const scale = pivot.transform.scale;
-				sizeXInput.value = scale.x * unit;
-				sizeYInput.value = scale.y * unit;
-				sizeZInput.value = scale.z * unit;
+		// Update size values based on scene bound
+		let unit = 3;// 高度 3cm
+		const updateSizeValues = () => {
+			// Check if scene is available and has elements
+			if (typeof window !== 'undefined' && (window as any).scene) {
+				const scene = (window as any).scene;
+				const bound = scene.bound;
+				const halfExtents = bound.halfExtents;
+
+				// Calculate actual dimensions (halfExtents * 2)
+				const width = halfExtents.x * 2;
+				const height = halfExtents.y * 2;
+				const depth = halfExtents.z * 2;
+
+				// Check if bound is valid (has elements)
+				if (width > 0 || height > 0 || depth > 0) {
+					sizeXInput.value = width * unit;
+					sizeYInput.value = height * unit;
+					sizeZInput.value = depth * unit;
+				} else {
+					sizeXInput.value = null;
+					sizeYInput.value = null;
+					sizeZInput.value = null;
+				}
 			} else {
 				sizeXInput.value = null;
 				sizeYInput.value = null;
@@ -196,28 +211,26 @@ class ScenePanel extends Container {
 			}
 		};
 
-		// Listen to selection changes
-		events.on('selection.changed', (selection) => {
-			if (selection) {
-				const pivot = events.invoke('pivot') as Pivot;
-				updateSizeValues(pivot);
-			} else {
-				updateSizeValues(null);
-			}
+		// Listen to scene bound changes
+		events.on('scene.boundChanged', () => {
+			updateSizeValues();
 		});
 
-		// Listen to pivot updates
-		events.on('pivot.placed', (pivot: Pivot) => {
-			updateSizeValues(pivot);
+		// Listen to edit operations (when model is modified)
+		events.on('edit.apply', () => {
+			// Use setTimeout to ensure bound is updated after edit
+			setTimeout(() => {
+				updateSizeValues();
+			}, 0);
 		});
 
-		events.on('pivot.moved', (pivot: Pivot) => {
-			updateSizeValues(pivot);
+		// Listen to selection changes (initial update)
+		events.on('selection.changed', () => {
+			updateSizeValues();
 		});
 
-		events.on('pivot.ended', (pivot: Pivot) => {
-			updateSizeValues(pivot);
-		});
+		// Initial update
+		updateSizeValues();
 
 
 
