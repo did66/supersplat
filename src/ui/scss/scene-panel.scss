@@ -1,5 +1,5 @@
 #scene-panel {
-    top: 10px;
+    top: 100px;
     left: 24px;
     width: 320px;
     border-radius: 10px;
@@ -8,6 +8,8 @@
     padding: 0 20px;
     padding-bottom: 20px;
     box-sizing: border-box;
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
 .collapsed #scene-panel {

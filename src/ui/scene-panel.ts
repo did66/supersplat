@@ -257,10 +257,14 @@ class ScenePanel extends Container {
 		// Update uploadButton disabled state based on print region
 		const updateUploadButtonState = () => {
 			printRegion = events.invoke('printRegion.getBound') as any | null;
+			// Always unregister first to avoid duplicate registrations
+			tooltips.unregister(uploadButton);
 			if (printRegion) {
 				uploadButton.class.remove('disabled');
 			} else {
 				uploadButton.class.add('disabled');
+				// Register tooltip when no print region is selected
+				tooltips.register(uploadButton, 'Please confirm the AutoArea', 'top');
 			}
 		};
 
@@ -280,6 +284,10 @@ class ScenePanel extends Container {
 			if (!printRegion) return;
 			events.fire('upload.modelAndViews')
 		})
+
+		const bottomBank = new Container({
+			class: 'bottom-bank'
+		});
 		transformHeader.append(transformTitle);
 		// transformHeader.append(transformLabel);
 
@@ -290,6 +298,7 @@ class ScenePanel extends Container {
 		this.append(colorPanelBox);
 		this.append(printBox);
 		this.append(uploadButton);
+		this.append(bottomBank);
 		// this.append(new Element({
 		// 	class: 'panel-header',
 		// 	height: 20

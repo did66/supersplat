@@ -1,19 +1,21 @@
-@use 'colors.scss' as *;
+@use 'colors.scss'as *;
 
 .select-toolbar {
     position: absolute;
     left: 50%;
-    bottom: 100px;
-    height: 54px;
+    top: 178px;
+    height: 45px;
     transform: translate(-50%, 0);
-    padding: 0px 8px;
+    padding: 0px 10px;
     border-radius: 8px;
+    box-sizing: border-box;
 
     background-color: $bcg-primary;
 
     &:not(.pcui-hidden) {
         display: flex;
     }
+
     flex-direction: row;
     align-items: center;
 

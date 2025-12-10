@@ -209,7 +209,7 @@ class BottomToolbar extends Container {
 		this.append(group2);
 		this.append(group3);
 		this.append(group4);
-		this.append(group5);
+		// this.append(group5);
 
 		undo.dom.addEventListener('click', () => events.fire('edit.undo'));
 		redo.dom.addEventListener('click', () => events.fire('edit.redo'));

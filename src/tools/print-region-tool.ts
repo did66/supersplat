@@ -63,7 +63,7 @@ class PrintRegionTool {
 		const lenX = new NumericInput({
 			precision: 2,
 			value: this.printRegion.lenX,
-			placeholder: '长度X',
+			placeholder: 'LenX',
 			width: 80,
 			min: 0.01
 		});
@@ -71,7 +71,7 @@ class PrintRegionTool {
 		const lenY = new NumericInput({
 			precision: 2,
 			value: this.printRegion.lenY,
-			placeholder: '长度Y',
+			placeholder: 'LenY',
 			width: 80,
 			min: 0.01
 		});
@@ -79,7 +79,7 @@ class PrintRegionTool {
 		const lenZ = new NumericInput({
 			precision: 2,
 			value: this.printRegion.lenZ,
-			placeholder: '长度Z',
+			placeholder: 'LenZ',
 			width: 80,
 			min: 0.01
 		});
@@ -87,7 +87,7 @@ class PrintRegionTool {
 		// 重置按钮
 		const resetButton = new Button({
 			text: '重置',
-			class: 'select-toolbar-button'
+			class: 'select-reset-button'
 		});
 
 		// 适配到选中Splat按钮
@@ -111,7 +111,7 @@ class PrintRegionTool {
 		toolbar.append(lenZ);
 		toolbar.append(resetButton);
 		// toolbar.append(fitToSelectionButton);
-		toolbar.append(exportButton);
+		// toolbar.append(exportButton);
 
 		canvasContainer.append(toolbar);
 

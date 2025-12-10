@@ -265,27 +265,43 @@ body {
     margin: 0;
 }
 
-/* scrollbar styling */
-
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+.pcui-input-element[placeholder]::after {
+    top: 50%;
+    transform: translateY(-50%);
 }
 
-::-webkit-scrollbar-track {
-    background: #20292b;
+/* Webkit 浏览器（Chrome, Safari, Edge） */
+::-webkit-scrollbar {
+    width: 5px;
+    /* 垂直滚动条宽度 */
+    height: 5px;
+    /* 水平滚动条高度 */
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #5b7073;
+    background: rgba(180, 180, 180, 0.5);
+    /* 滚动条滑块颜色 */
+    border-radius: 5px;
+    transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #f60;
+    background: rgba(120, 120, 120, 0.7);
+    /* 滑块悬停颜色 */
 }
 
-::-webkit-scrollbar-corner {
-    background: #2c393c;
+::-webkit-scrollbar-track {
+    background: transparent;
+    /* 滚动条轨道背景 */
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    /* 滚动条变细 */
+    scrollbar-color: #b4b4b4 transparent;
+    /* 滑块颜色 轨道颜色 */
 }
 
 .font-thin {
