@@ -220,10 +220,10 @@ class ColorPanel extends Container {
 		// control row
 
 		const controlRow = new Container({
-			class: 'color-panel-control-reset'
+			class: 'btn-primary'
 		});
 		const resetLabel = new Label({
-			class: 'color-panel-control-reset-label',
+			class: 'btn-label',
 			text: localize('panel.colors.reset')
 		});
 		controlRow.dom.appendChild(createSvg(resetIconSvg));

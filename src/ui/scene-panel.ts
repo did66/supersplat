@@ -122,7 +122,7 @@ class ScenePanel extends Container {
 
 		// Size row
 		const sizeRow = new Container({
-			class: 'transform-row'
+			class: 'size-row'
 		});
 
 		const sizeLabel = new Label({
@@ -166,11 +166,11 @@ class ScenePanel extends Container {
 
 		// AutoArea button
 		const autoAreaButton = new Container({
-			class: 'print-auto-area-button',
+			class: 'btn-primary',
 
 		});
 		const autoAreaLabel = new Label({
-			class: 'print-auto-area-label',
+			class: 'btn-label',
 			text: localize('panel.autoArea')
 		});
 		autoAreaButton.dom.appendChild(createSvg(autoareaSvg));
@@ -245,6 +245,16 @@ class ScenePanel extends Container {
 		autoAreaButton.dom.addEventListener('click', () => events.fire('tool.printRegion'))
 
 
+		const uploadButton = new Container({
+			class: 'btn-warning'
+		});
+
+		const uploadLabel = new Label({
+			text: localize('tooltip.upload-model'),
+			class: 'upload-label'
+		});
+
+		uploadButton.append(uploadLabel);
 
 
 		transformHeader.append(transformTitle);
@@ -256,6 +266,7 @@ class ScenePanel extends Container {
 		this.append(new Transform(events));
 		this.append(colorPanelBox);
 		this.append(printBox);
+		this.append(uploadButton);
 		// this.append(new Element({
 		// 	class: 'panel-header',
 		// 	height: 20
