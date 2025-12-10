@@ -2,7 +2,7 @@
  * 打印区域选择工具
  * 允许用户定义和调整打印区域的边界框
  */
-import { Button, Container, NumericInput, SelectInput } from '@playcanvas/pcui';
+import { Button, Container, NumericInput, SelectInput, Label } from '@playcanvas/pcui';
 import { TranslateGizmo, Vec3 } from 'playcanvas';
 
 import { PrintRegionShape } from '../print-region-shape';
@@ -112,6 +112,12 @@ class PrintRegionTool {
 			}
 		];
 
+		const sizeLabel = new Label({
+			class: 'size-label',
+			text: 'Print size'
+		});
+
+
 		// 尺寸选择器
 		const sizeSelect = new SelectInput({
 			options: sizesOptions.map(option => ({
@@ -146,6 +152,7 @@ class PrintRegionTool {
 		toolbar.append(lenX);
 		toolbar.append(lenY);
 		toolbar.append(lenZ);
+		toolbar.append(sizeLabel);
 		toolbar.append(sizeSelect);
 		toolbar.append(resetButton);
 		// toolbar.append(fitToSelectionButton);
