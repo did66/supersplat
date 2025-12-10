@@ -110,6 +110,17 @@ class ScenePanel extends Container {
 			class: 'panel-header-label'
 		});
 
+		const printBox = new Container({
+			class: 'print-box'
+		});
+
+		const printTitle = new Label({
+			text: localize('panel.scene-manager.print'),
+			class: 'transform-header-title'
+		});
+		printBox.append(printTitle);
+
+
 
 
 		transformHeader.append(transformTitle);
@@ -120,6 +131,7 @@ class ScenePanel extends Container {
 		this.append(transformHeader);
 		this.append(new Transform(events));
 		this.append(colorPanelBox);
+		this.append(printBox);
 		// this.append(new Element({
 		// 	class: 'panel-header',
 		// 	height: 20

@@ -41,6 +41,7 @@
 	"panel.scene-manager.transform.position": "位置",
 	"panel.scene-manager.transform.rotation": "旋转",
 	"panel.scene-manager.transform.scale": "缩放",
+	"panel.scene-manager.print": "打印",
 	"panel.colors": "颜色",
 	"panel.model-controls": "模型控制",
 	"panel.colors.tint": "色调",
