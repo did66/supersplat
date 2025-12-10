@@ -43,6 +43,7 @@
 	"panel.scene-manager.transform.scale": "缩放",
 	"panel.scene-manager.print": "打印",
 	"panel.colors": "颜色",
+	"panel.autoArea": "自动选区",
 	"panel.model-controls": "模型控制",
 	"panel.colors.tint": "色调",
 	"panel.colors.temperature": "温度",

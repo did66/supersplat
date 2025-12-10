@@ -1,4 +1,4 @@
-import { Container, Element, Label } from '@playcanvas/pcui';
+import { Container, Element, Label, NumericInput, Button } from '@playcanvas/pcui';
 
 import { Events } from '../events';
 import { localize } from './localization';
@@ -9,6 +9,8 @@ import collapsedSvg from './svg/collapsed.svg';
 import { Tooltips } from './tooltips';
 import { Transform } from './transform';
 import { ColorPanel } from './color-panel';
+import { Pivot } from '../pivot';
+import autoareaSvg from './svg/autoarea.svg';
 
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
@@ -118,7 +120,104 @@ class ScenePanel extends Container {
 			text: localize('panel.scene-manager.print'),
 			class: 'transform-header-title'
 		});
+
+		// Size row
+		const sizeRow = new Container({
+			class: 'transform-row'
+		});
+
+		const sizeLabel = new Label({
+			class: 'transform-label',
+			text: 'Size(cm)'
+		});
+
+		const sizeXInput = new NumericInput({
+			class: 'print-size-input',
+			precision: 2,
+			value: null,
+			enabled: false,
+			placeholder: 'PX'
+		});
+
+		const sizeYInput = new NumericInput({
+			class: 'print-size-input',
+			precision: 2,
+			value: null,
+			enabled: false,
+			placeholder: 'PY'
+		});
+
+		const sizeZInput = new NumericInput({
+			class: 'print-size-input',
+			precision: 2,
+			value: null,
+			enabled: false,
+			placeholder: 'PZ'
+		});
+
+		const sizeInputsContainer = new Container({
+			class: 'print-size-inputs'
+		});
+		sizeInputsContainer.append(sizeXInput);
+		sizeInputsContainer.append(sizeYInput);
+		sizeInputsContainer.append(sizeZInput);
+
+		sizeRow.append(sizeLabel);
+		sizeRow.append(sizeInputsContainer);
+
+		// AutoArea button
+		const autoAreaButton = new Container({
+			class: 'print-auto-area-button',
+
+		});
+		const autoAreaLabel = new Label({
+			class: 'print-auto-area-label',
+			text: localize('panel.autoArea')
+		});
+		autoAreaButton.dom.appendChild(createSvg(autoareaSvg));
+		autoAreaButton.append(autoAreaLabel);
+
 		printBox.append(printTitle);
+		printBox.append(sizeRow);
+		printBox.append(autoAreaButton);
+
+		// Update size values based on model scale
+		let unit = 3;
+		const updateSizeValues = (pivot: Pivot | null) => {
+			if (pivot && pivot.transform) {
+				const scale = pivot.transform.scale;
+				sizeXInput.value = scale.x * unit;
+				sizeYInput.value = scale.y * unit;
+				sizeZInput.value = scale.z * unit;
+			} else {
+				sizeXInput.value = null;
+				sizeYInput.value = null;
+				sizeZInput.value = null;
+			}
+		};
+
+		// Listen to selection changes
+		events.on('selection.changed', (selection) => {
+			if (selection) {
+				const pivot = events.invoke('pivot') as Pivot;
+				updateSizeValues(pivot);
+			} else {
+				updateSizeValues(null);
+			}
+		});
+
+		// Listen to pivot updates
+		events.on('pivot.placed', (pivot: Pivot) => {
+			updateSizeValues(pivot);
+		});
+
+		events.on('pivot.moved', (pivot: Pivot) => {
+			updateSizeValues(pivot);
+		});
+
+		events.on('pivot.ended', (pivot: Pivot) => {
+			updateSizeValues(pivot);
+		});
 
 
 
