@@ -196,9 +196,16 @@ class ScenePanel extends Container {
 
 				// Check if bound is valid (has elements)
 				if (width > 0 || height > 0 || depth > 0) {
-					sizeXInput.value = width * unit;
-					sizeYInput.value = height * unit;
-					sizeZInput.value = depth * unit;
+					// Height is fixed at unit (3cm), X and Z are calculated by ratio (height = 1)
+					if (height > 0) {
+						sizeXInput.value = (width / height) * unit;
+						sizeYInput.value = unit; // Height is fixed at 3cm
+						sizeZInput.value = (depth / height) * unit;
+					} else {
+						sizeXInput.value = null;
+						sizeYInput.value = null;
+						sizeZInput.value = null;
+					}
 				} else {
 					sizeXInput.value = null;
 					sizeYInput.value = null;

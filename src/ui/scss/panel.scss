@@ -95,14 +95,18 @@
 
     .print-size-input {
         flex: 1;
-        height: 22px;
-        line-height: 22px;
+        height: 24px;
+        line-height: 24px;
         margin: 0px;
+        border-radius: 4px;
+        background: $bcg-dark-f5;
+        overflow: hidden;
+        padding: 0 5px;
 
         &>input {
             padding: 0px;
             margin: 0px;
-            height: 22px;
+            height: 24px;
             background-color: transparent;
             color: $text-secondary;
         }
@@ -123,4 +127,5 @@
             padding-left: 5px;
         }
     }
+
 }
