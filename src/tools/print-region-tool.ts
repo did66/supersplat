@@ -43,10 +43,20 @@ class PrintRegionTool {
 			scene.forceRender = true;
 		});
 
+		// 辅助函数：同时触发打印区域变化和尺寸变化事件
+		const firePrintRegionEvents = () => {
+			events.fire('printRegion.changed', this.getPrintRegionBound());
+			events.fire('printRegion.sizeChanged', {
+				lenX: this.printRegion.lenX,
+				lenY: this.printRegion.lenY,
+				lenZ: this.printRegion.lenZ
+			});
+		};
+
 		this.gizmo.on('transform:move', () => {
 			this.printRegion.moved();
 			// 触发打印区域变化事件
-			events.fire('printRegion.changed', this.getPrintRegionBound());
+			firePrintRegionEvents();
 		});
 
 		// UI工具栏
@@ -176,15 +186,15 @@ class PrintRegionTool {
 		// 尺寸变化监听
 		lenX.on('change', () => {
 			this.printRegion.lenX = lenX.value;
-			events.fire('printRegion.changed', this.getPrintRegionBound());
+			firePrintRegionEvents();
 		});
 		lenY.on('change', () => {
 			this.printRegion.lenY = lenY.value;
-			events.fire('printRegion.changed', this.getPrintRegionBound());
+			firePrintRegionEvents();
 		});
 		lenZ.on('change', () => {
 			this.printRegion.lenZ = lenZ.value;
-			events.fire('printRegion.changed', this.getPrintRegionBound());
+			firePrintRegionEvents();
 		});
 
 		// 更新 sizeSelect 选项的函数
@@ -247,7 +257,7 @@ class PrintRegionTool {
 					lenY.value = this.printRegion.lenY;
 					lenZ.value = this.printRegion.lenZ;
 					this.gizmo.attach([this.printRegion.pivot]);
-					events.fire('printRegion.changed', this.getPrintRegionBound());
+					firePrintRegionEvents();
 				}
 			}
 		});
@@ -273,7 +283,7 @@ class PrintRegionTool {
 			if (this.active) {
 				this.printRegion.pivot.setPosition(details.position);
 				this.gizmo.attach([this.printRegion.pivot]);
-				events.fire('printRegion.changed', this.getPrintRegionBound());
+				firePrintRegionEvents();
 			}
 		});
 
@@ -349,7 +359,7 @@ class PrintRegionTool {
 			this.gizmo.attach([this.printRegion.pivot]);
 			toolbar.hidden = false;
 			// 触发打印区域变化事件
-			events.fire('printRegion.changed', this.getPrintRegionBound());
+			firePrintRegionEvents();
 		};
 
 		// 停用工具
@@ -383,6 +393,11 @@ class PrintRegionTool {
 		this.printRegion.lenY = this.initialLenY;
 		this.printRegion.lenZ = this.initialLenZ;
 		this.events.fire('printRegion.changed', this.getPrintRegionBound());
+		this.events.fire('printRegion.sizeChanged', {
+			lenX: this.printRegion.lenX,
+			lenY: this.printRegion.lenY,
+			lenZ: this.printRegion.lenZ
+		});
 	}
 
 	/**

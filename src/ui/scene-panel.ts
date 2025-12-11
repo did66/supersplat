@@ -182,10 +182,27 @@ class ScenePanel extends Container {
 		printBox.append(sizeRow);
 		printBox.append(autoAreaButton);
 
-		// Update size values based on scene bound
+		// Update size values based on scene bound or print region
 		let unit = 3;// 高度，默认值，会被 print-region-tool 的 change 事件更新
+		let printRegionSize: { lenX: number; lenY: number; lenZ: number } | null = null;
 		const updateSizeValues = () => {
-			// Check if scene is available and has elements
+			// 优先使用打印区域的尺寸
+			if (printRegionSize) {
+				const { lenX, lenY, lenZ } = printRegionSize;
+				// 使用打印区域的比例，高度固定为 unit
+				if (lenY > 0) {
+					sizeXInput.value = (lenX / lenY) * unit;
+					sizeYInput.value = unit; // Height is fixed at unit
+					sizeZInput.value = (lenZ / lenY) * unit;
+				} else {
+					sizeXInput.value = null;
+					sizeYInput.value = null;
+					sizeZInput.value = null;
+				}
+				return;
+			}
+
+			// 如果没有打印区域，使用 scene bound
 			if (typeof window !== 'undefined' && (window as any).scene) {
 				const scene = (window as any).scene;
 				const bound = scene.bound;
@@ -201,7 +218,7 @@ class ScenePanel extends Container {
 					// Height is fixed at unit (3cm), X and Z are calculated by ratio (height = 1)
 					if (height > 0) {
 						sizeXInput.value = (width / height) * unit;
-						sizeYInput.value = unit; // Height is fixed at 3cm
+						sizeYInput.value = unit; // Height is fixed at unit
 						sizeZInput.value = (depth / height) * unit;
 					} else {
 						sizeXInput.value = null;
@@ -242,6 +259,22 @@ class ScenePanel extends Container {
 		events.on('printSize.unitChanged', (newUnit: number) => {
 			unit = newUnit;
 			updateSizeValues();
+		});
+
+		// Listen to print region size changes
+		events.on('printRegion.sizeChanged', (size: { lenX: number; lenY: number; lenZ: number }) => {
+			printRegionSize = size;
+			updateSizeValues();
+		});
+
+		// Listen to print region changes (when print region is created or removed)
+		events.on('printRegion.changed', (bound: any) => {
+			// 如果打印区域被移除，清空 printRegionSize
+			if (!bound) {
+				printRegionSize = null;
+				updateSizeValues();
+			}
+			// 如果打印区域存在，sizeChanged 事件会处理尺寸更新
 		});
 
 		// Initial update
