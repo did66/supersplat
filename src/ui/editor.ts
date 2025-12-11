@@ -127,7 +127,7 @@ class EditorUI {
 		const menu = new Menu(events);
 
 		canvasContainer.dom.appendChild(canvas);
-		// canvasContainer.append(appLabel);
+		canvasContainer.append(appLabel);
 		canvasContainer.append(cursorLabel);
 		canvasContainer.append(toolsContainer);
 		canvasContainer.append(scenePanel);

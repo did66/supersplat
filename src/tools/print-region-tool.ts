@@ -9,6 +9,7 @@ import { PrintRegionShape } from '../print-region-shape';
 import { Events } from '../events';
 import { Scene } from '../scene';
 import { Splat } from '../splat';
+import { localize } from '../ui/localization';
 
 /**
  * 打印区域选择工具类
@@ -153,7 +154,7 @@ class PrintRegionTool {
 
 		// 重置按钮
 		const resetButton = new Button({
-			text: '重置',
+			text: localize('panel.colors.reset'),
 			class: 'select-reset-button'
 		});
 
