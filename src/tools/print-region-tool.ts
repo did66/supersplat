@@ -333,28 +333,28 @@ class PrintRegionTool {
 				scene.add(this.printRegion);
 			}
 
-			// 如果是第一次激活，自动执行适配选中功能并保存初始状态
-			if (!this.isInitialized) {
-				const bound = selected.worldBound;
-				if (bound) {
-					this.printRegion.pivot.setPosition(bound.center);
-					this.printRegion.lenX = bound.halfExtents.x * 2;
-					this.printRegion.lenY = bound.halfExtents.y * 2;
-					this.printRegion.lenZ = bound.halfExtents.z * 2;
-				}
+			// 每次激活时都重新适配到最新的选中模型
+			const bound = selected.worldBound;
+			if (bound) {
+				this.printRegion.pivot.setPosition(bound.center);
+				this.printRegion.lenX = bound.halfExtents.x * 2;
+				this.printRegion.lenY = bound.halfExtents.y * 2;
+				this.printRegion.lenZ = bound.halfExtents.z * 2;
+			}
 
-				// 保存初始状态
+			// 如果是第一次激活，保存初始状态（用于重置功能）
+			if (!this.isInitialized) {
 				this.initialPosition.copy(this.printRegion.pivot.getPosition());
 				this.initialLenX = this.printRegion.lenX;
 				this.initialLenY = this.printRegion.lenY;
 				this.initialLenZ = this.printRegion.lenZ;
 				this.isInitialized = true;
-
-				// 更新输入框
-				lenX.value = this.printRegion.lenX;
-				lenY.value = this.printRegion.lenY;
-				lenZ.value = this.printRegion.lenZ;
 			}
+
+			// 更新输入框
+			lenX.value = this.printRegion.lenX;
+			lenY.value = this.printRegion.lenY;
+			lenZ.value = this.printRegion.lenZ;
 
 			this.gizmo.attach([this.printRegion.pivot]);
 			toolbar.hidden = false;
