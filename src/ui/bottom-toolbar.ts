@@ -447,10 +447,45 @@ class BottomToolbar extends Container {
 			events.fire('camera.setBound', showBoundToggle.value);
 		});
 
+		// 更新设置面板位置，使其右侧与设置按钮右侧对齐
+		const updateSettingsPanelPosition = () => {
+			if (!settingsPanel.hidden) {
+				// 获取设置按钮和工具栏的位置
+				const setRect = set.dom.getBoundingClientRect();
+				const toolbarRect = this.dom.getBoundingClientRect();
+				const panelRect = settingsPanel.dom.getBoundingClientRect();
+
+				// 由于工具栏是居中显示的，我们需要计算设置按钮右侧相对于工具栏中心的偏移
+				// 工具栏中心位置 = toolbarRect.left + toolbarRect.width / 2
+				// 设置按钮右侧相对于工具栏中心的偏移 = setRect.right - (toolbarRect.left + toolbarRect.width / 2)
+				const toolbarCenter = toolbarRect.left + toolbarRect.width / 2;
+				const setRightOffsetFromCenter = setRect.right - toolbarCenter;
+
+				// 设置面板也应该以工具栏中心为基准定位
+				// 面板的右侧应该与设置按钮的右侧对齐
+				// 面板的 left = 工具栏中心 + (设置按钮右侧偏移 - 面板宽度)
+				settingsPanel.dom.style.left = '50%';
+				settingsPanel.dom.style.transform = `translate(${setRightOffsetFromCenter - panelRect.width}px, 0)`;
+			}
+		};
+
 		// set 按钮点击事件
 		set.dom.addEventListener('click', () => {
 			settingsPanel.hidden = !settingsPanel.hidden;
 			set.class[settingsPanel.hidden ? 'remove' : 'add']('active');
+			if (!settingsPanel.hidden) {
+				// 使用 requestAnimationFrame 确保 DOM 更新后再计算位置
+				requestAnimationFrame(() => {
+					updateSettingsPanelPosition();
+				});
+			}
+		});
+
+		// 监听窗口大小变化，更新面板位置
+		window.addEventListener('resize', () => {
+			if (!settingsPanel.hidden) {
+				updateSettingsPanelPosition();
+			}
 		});
 
 		// 暴露 settingsPanel 以便在 editor.ts 中使用
