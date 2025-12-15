@@ -21,6 +21,7 @@ import scaleSvg from './svg/scale.svg';
 import deleteSvg from './svg/delete-my.svg';
 import coordSpaceSvg from './svg/coordSpace.svg';
 import printRegionSvg from './svg/printRegion.svg';
+import setSvg from './svg/setSvg.svg';
 
 
 const createSvg = (svgString: string) => {
@@ -149,6 +150,11 @@ class BottomToolbar extends Container {
 			class: 'bottom-toolbar-tool'
 		});
 
+		const set = new Button({
+			id: 'bottom-toolbar-set',
+			class: 'bottom-toolbar-tool'
+		});
+
 		undo.dom.appendChild(createSvg(undoSvg));
 		redo.dom.appendChild(createSvg(redoSvg));
 		picker.dom.appendChild(createSvg(pickerSvg));
@@ -163,6 +169,7 @@ class BottomToolbar extends Container {
 		// crop.dom.appendChild(createSvg(cropSvg));
 		upload.dom.appendChild(createSvg(publishSvg));
 		printRegion.dom.appendChild(createSvg(printRegionSvg));
+		set.dom.appendChild(createSvg(setSvg));
 
 		// 第一组：撤销/重做（左右箭头）
 		const group1 = new Container({
@@ -202,14 +209,15 @@ class BottomToolbar extends Container {
 		const group5 = new Container({
 			class: 'bottom-toolbar-group'
 		});
-		group5.append(printRegion);
-		group5.append(upload);
+		// group5.append(printRegion);
+		// group5.append(upload);
+		group5.append(set);
 
 		this.append(group1);
 		this.append(group2);
 		this.append(group3);
 		this.append(group4);
-		// this.append(group5);
+		this.append(group5);
 
 		undo.dom.addEventListener('click', () => events.fire('edit.undo'));
 		redo.dom.addEventListener('click', () => events.fire('edit.redo'));

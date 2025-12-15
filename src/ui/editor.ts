@@ -74,7 +74,7 @@ class EditorUI {
 		// app label
 		const appLabel = new Label({
 			id: 'app-label',
-			text: `SUPERSPLAT v${version}`
+			text: `BUILT ON SUPERSPLAT v${version}`
 		});
 
 		// cursor label
@@ -134,7 +134,7 @@ class EditorUI {
 		canvasContainer.append(viewPanel);
 		// canvasContainer.append(colorPanel);
 		canvasContainer.append(bottomToolbar);
-		// canvasContainer.append(rightToolbar);
+		canvasContainer.append(rightToolbar);
 		// canvasContainer.append(modeToggle);
 		// canvasContainer.append(menu);
 
