@@ -1,4 +1,5 @@
-import { Button, Element, Container } from '@playcanvas/pcui';
+import { Button, Element, Container, Label, BooleanInput, ColorPicker, NumericInput } from '@playcanvas/pcui';
+import { Color } from 'playcanvas';
 
 import { Events } from '../events';
 import { localize } from './localization';
@@ -269,6 +270,191 @@ class BottomToolbar extends Container {
 		events.on('pivot.origin', (o: 'center' | 'boundCenter') => {
 			origin.dom.classList[o === 'boundCenter' ? 'add' : 'remove']('active');
 		});
+
+		// 设置面板
+		const settingsPanel = new Container({
+			id: 'bottom-toolbar-settings-panel',
+			class: 'bottom-toolbar-settings-panel',
+			hidden: true
+		});
+
+		// 阻止事件冒泡
+		['pointerdown', 'pointerup', 'pointermove', 'wheel', 'dblclick'].forEach((eventName) => {
+			settingsPanel.dom.addEventListener(eventName, (event: Event) => event.stopPropagation());
+		});
+
+		// 背景颜色行
+		const bgColorRow = new Container({
+			class: 'bottom-toolbar-settings-row'
+		});
+
+		const bgColorLabel = new Label({
+			class: 'bottom-toolbar-settings-label',
+			text: localize('panel.colors')
+		});
+
+		const bgColorPicker = new ColorPicker({
+			class: 'bottom-toolbar-settings-color-picker',
+			channels: 3,
+			value: [1, 1, 1]
+		});
+
+		const rgbLabel = new Label({
+			class: 'bottom-toolbar-settings-rgb-label',
+			text: 'RGB'
+		});
+
+		const rInput = new NumericInput({
+			class: 'bottom-toolbar-settings-rgb-input',
+			precision: 0,
+			value: 255,
+			min: 0,
+			max: 255,
+			width: 60
+		});
+
+		const gInput = new NumericInput({
+			class: 'bottom-toolbar-settings-rgb-input',
+			precision: 0,
+			value: 255,
+			min: 0,
+			max: 255,
+			width: 60
+		});
+
+		const bInput = new NumericInput({
+			class: 'bottom-toolbar-settings-rgb-input',
+			precision: 0,
+			value: 255,
+			min: 0,
+			max: 255,
+			width: 60
+		});
+
+		bgColorRow.append(bgColorLabel);
+		bgColorRow.append(bgColorPicker);
+		// bgColorRow.append(rgbLabel);
+		// bgColorRow.append(rInput);
+		// bgColorRow.append(gInput);
+		// bgColorRow.append(bInput);
+
+		// 显示/隐藏边界行
+		const showBoundRow = new Container({
+			class: 'bottom-toolbar-settings-row'
+		});
+
+		const showBoundLabel = new Label({
+			class: 'bottom-toolbar-settings-label',
+			text: localize('panel.view-options.show-bound')
+		});
+
+		const showBoundToggle = new BooleanInput({
+			type: 'toggle',
+			class: 'bottom-toolbar-settings-toggle',
+			value: false
+		});
+
+		showBoundRow.append(showBoundLabel);
+		showBoundRow.append(showBoundToggle);
+
+		// 显示/隐藏网格行
+		const showGridRow = new Container({
+			class: 'bottom-toolbar-settings-row'
+		});
+
+		const showGridLabel = new Label({
+			class: 'bottom-toolbar-settings-label',
+			text: localize('panel.view-options.show-grid')
+		});
+
+		const showGridToggle = new BooleanInput({
+			type: 'toggle',
+			class: 'bottom-toolbar-settings-toggle',
+			value: true
+		});
+
+		showGridRow.append(showGridLabel);
+		showGridRow.append(showGridToggle);
+
+		settingsPanel.append(bgColorRow);
+		settingsPanel.append(showBoundRow);
+		settingsPanel.append(showGridRow);
+
+		// 添加到父容器（需要在 editor.ts 中添加，这里先添加到当前容器）
+		// 注意：实际应该在 editor.ts 中添加到 canvasContainer
+
+		// 背景颜色事件处理
+		const toArray = (clr: Color) => {
+			return [clr.r, clr.g, clr.b];
+		};
+
+		const toRGB = (value: number[]) => {
+			return [Math.round(value[0] * 255), Math.round(value[1] * 255), Math.round(value[2] * 255)];
+		};
+
+		events.on('bgClr', (clr: Color) => {
+			bgColorPicker.value = toArray(clr);
+			const rgb = toRGB(toArray(clr));
+			rInput.value = rgb[0];
+			gInput.value = rgb[1];
+			bInput.value = rgb[2];
+		});
+
+		bgColorPicker.on('change', (value: number[]) => {
+			events.fire('setBgClr', new Color(value[0], value[1], value[2]));
+			const rgb = toRGB(value);
+			rInput.value = rgb[0];
+			gInput.value = rgb[1];
+			bInput.value = rgb[2];
+		});
+
+		rInput.on('change', () => {
+			const r = rInput.value / 255;
+			const current = bgColorPicker.value;
+			bgColorPicker.value = [r, current[1], current[2]];
+			events.fire('setBgClr', new Color(r, current[1], current[2]));
+		});
+
+		gInput.on('change', () => {
+			const g = gInput.value / 255;
+			const current = bgColorPicker.value;
+			bgColorPicker.value = [current[0], g, current[2]];
+			events.fire('setBgClr', new Color(current[0], g, current[2]));
+		});
+
+		bInput.on('change', () => {
+			const b = bInput.value / 255;
+			const current = bgColorPicker.value;
+			bgColorPicker.value = [current[0], current[1], b];
+			events.fire('setBgClr', new Color(current[0], current[1], b));
+		});
+
+		// 显示网格事件处理
+		events.on('grid.visible', (visible: boolean) => {
+			showGridToggle.value = visible;
+		});
+
+		showGridToggle.on('change', () => {
+			events.fire('grid.setVisible', showGridToggle.value);
+		});
+
+		// 显示边界事件处理
+		events.on('camera.bound', (visible: boolean) => {
+			showBoundToggle.value = visible;
+		});
+
+		showBoundToggle.on('change', () => {
+			events.fire('camera.setBound', showBoundToggle.value);
+		});
+
+		// set 按钮点击事件
+		set.dom.addEventListener('click', () => {
+			settingsPanel.hidden = !settingsPanel.hidden;
+			set.class[settingsPanel.hidden ? 'remove' : 'add']('active');
+		});
+
+		// 暴露 settingsPanel 以便在 editor.ts 中使用
+		(this as any).settingsPanel = settingsPanel;
 
 		// register tooltips
 		tooltips.register(undo, localize('tooltip.bottom-toolbar.undo'));

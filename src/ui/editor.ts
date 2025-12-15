@@ -134,6 +134,10 @@ class EditorUI {
 		canvasContainer.append(viewPanel);
 		// canvasContainer.append(colorPanel);
 		canvasContainer.append(bottomToolbar);
+		// 添加设置面板到 canvasContainer
+		if ((bottomToolbar as any).settingsPanel) {
+			canvasContainer.append((bottomToolbar as any).settingsPanel);
+		}
 		canvasContainer.append(rightToolbar);
 		// canvasContainer.append(modeToggle);
 		// canvasContainer.append(menu);

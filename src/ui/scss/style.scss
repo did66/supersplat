@@ -139,6 +139,7 @@ body {
     }
 }
 
+
 #view-cube-container {
     position: absolute;
     width: 140px;
@@ -304,6 +305,33 @@ body {
 .pcui-select-input.pcui-open .pcui-select-input-icon::after {
     color: #000;
 }
+
+.pcui-boolean-input-toggle {
+    margin: 0;
+    border: none;
+    width: 35px;
+    height: 19px;
+    border-radius: 15px;
+
+    &::after {
+        background: #fff;
+        top: 3px;
+        left: 3px;
+    }
+
+    &.pcui-boolean-input-ticked {
+        &::after {
+            background: #000;
+            top: 3px;
+            left: auto;
+            right: 3px;
+        }
+
+    }
+}
+
+
+
 
 /* Webkit 浏览器（Chrome, Safari, Edge） */
 ::-webkit-scrollbar {
