@@ -135,7 +135,8 @@ class ScenePanel extends Container {
 			class: 'transform-panel-box'
 		});
 		transformPanelBox.append(transformPanel);
-		transformPanelBox.hidden = transformExpanded;
+		transformPanelBox.hidden = !transformExpanded;
+		transformArrow.style.transform = transformExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
 
 		titleTransformBox.on('click', () => {
 			transformExpanded = !transformExpanded;
@@ -232,7 +233,8 @@ class ScenePanel extends Container {
 		});
 		colorPanelItem.append(colorPanel);
 		let colorExpanded = false;
-		colorPanelItem.hidden = colorExpanded;
+		colorPanelItem.hidden = !colorExpanded;
+		colorArrow.style.transform = colorExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
 
 		titleColorBox.on('click', () => {
 			colorExpanded = !colorExpanded;
