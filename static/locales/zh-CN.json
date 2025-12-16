@@ -36,7 +36,7 @@
 	"menu.help.about": "关于 SuperSplat",
 	"panel.mode.centers": "中心模式",
 	"panel.mode.rings": "环模式",
-	"panel.scene-manager": "Toolbar",
+	"panel.scene-manager": "工具栏",
 	"panel.scene-manager.collection": "模型集合",
 	"panel.scene-manager.transform": "模型变换",
 	"panel.scene-manager.transform.position": "位置",

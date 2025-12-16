@@ -37,6 +37,7 @@
 	"panel.mode.centers": "Punkt Modus",
 	"panel.mode.rings": "Ring Modus",
 	"panel.scene-manager": "Szenen Manager",
+	"panel.scene-manager.collection": "Modellsammlung",
 	"panel.scene-manager.transform": "Transformation",
 	"panel.scene-manager.transform.position": "Position",
 	"panel.scene-manager.transform.rotation": "Rotation",

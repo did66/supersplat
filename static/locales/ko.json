@@ -37,6 +37,7 @@
 	"panel.mode.centers": "센터 모드",
 	"panel.mode.rings": "링 모드",
 	"panel.scene-manager": "장면 관리자",
+	"panel.scene-manager.collection": "모델 컬렉션",
 	"panel.scene-manager.transform": "변환",
 	"panel.scene-manager.transform.position": "위치",
 	"panel.scene-manager.transform.rotation": "회전",

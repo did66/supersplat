@@ -37,6 +37,7 @@
 	"panel.mode.centers": "センターモード",
 	"panel.mode.rings": "リングモード",
 	"panel.scene-manager": "シーンマネージャー",
+	"panel.scene-manager.collection": "モデルコレクション",
 	"panel.scene-manager.transform": "トランスフォーム",
 	"panel.scene-manager.transform.position": "位置",
 	"panel.scene-manager.transform.rotation": "回転",

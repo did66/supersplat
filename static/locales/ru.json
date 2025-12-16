@@ -37,6 +37,7 @@
 	"panel.mode.centers": "Режим центров",
 	"panel.mode.rings": "Режим колец",
 	"panel.scene-manager": "Менеджер сцены",
+	"panel.scene-manager.collection": "Коллекция моделей",
 	"panel.scene-manager.transform": "Трансформация",
 	"panel.scene-manager.transform.position": "Позиция",
 	"panel.scene-manager.transform.rotation": "Вращение",

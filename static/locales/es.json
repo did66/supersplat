@@ -37,6 +37,7 @@
 	"panel.mode.centers": "Modo centros",
 	"panel.mode.rings": "Modo anillos",
 	"panel.scene-manager": "Gestor de escena",
+	"panel.scene-manager.collection": "Colección de Modelos",
 	"panel.scene-manager.transform": "Transformación",
 	"panel.scene-manager.transform.position": "Posición",
 	"panel.scene-manager.transform.rotation": "Rotación",
