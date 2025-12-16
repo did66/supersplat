@@ -1,5 +1,5 @@
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, MkvOutputFormat, MovOutputFormat, Mp4OutputFormat, Output, StreamTarget, WebMOutputFormat } from 'mediabunny';
-import { path, Vec3 } from 'playcanvas';
+import { Color, path, Vec3 } from 'playcanvas';
 
 import { ElementType } from './element';
 import { Events } from './events';
@@ -186,7 +186,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 		try {
 			const { width, height, transparentBg, showDebug } = imageSettings;
-			const bgClr = events.invoke('bgClr');
+			// 四视图使用白色背景
+			const whiteBg = new Color(1, 1, 1);
+			// const bgClr = events.invoke('bgClr');
+			const bgClr = whiteBg;
 
 			const splats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
 			if (splats.length === 0) throw new Error('No visible splats to render');
