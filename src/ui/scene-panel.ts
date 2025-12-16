@@ -6,6 +6,7 @@ import { SplatList } from './splat-list';
 import sceneImportSvg from './svg/upload-btn.svg';
 import sceneNewSvg from './svg/new.svg';
 import collapsedSvg from './svg/collapsed.svg';
+import expandSvg from './svg/expandSvg.svg';
 import { Tooltips } from './tooltips';
 import { Transform } from './transform';
 import { ColorPanel } from './color-panel';
@@ -58,11 +59,15 @@ class ScenePanel extends Container {
 		const collapse = new Container({
 			class: 'panel-collapse-button'
 		});
-		collapse.dom.appendChild(createSvg(collapsedSvg));
-
+		let collapseIcon = createSvg(collapsedSvg);
+		collapse.dom.appendChild(collapseIcon);
 
 		const toggleCollapsed = () => {
-			document.body.classList.toggle('collapsed');
+			const isCollapsed = document.body.classList.toggle('collapsed');
+			// 切换图标：收起时显示 expandSvg，展开时显示 collapsedSvg
+			collapse.dom.removeChild(collapseIcon);
+			collapseIcon = createSvg(isCollapsed ? expandSvg : collapsedSvg);
+			collapse.dom.appendChild(collapseIcon);
 		};
 
 		collapse.on('click', toggleCollapsed);
