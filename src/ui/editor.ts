@@ -138,7 +138,7 @@ class EditorUI {
 		if ((bottomToolbar as any).settingsPanel) {
 			canvasContainer.append((bottomToolbar as any).settingsPanel);
 		}
-		canvasContainer.append(rightToolbar);
+		// canvasContainer.append(rightToolbar);
 		// canvasContainer.append(modeToggle);
 		// canvasContainer.append(menu);
 

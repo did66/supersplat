@@ -351,7 +351,7 @@ class BottomToolbar extends Container {
 		const showBoundToggle = new BooleanInput({
 			type: 'toggle',
 			class: 'bottom-toolbar-settings-toggle',
-			value: false
+			value: true
 		});
 
 		showBoundRow.append(showBoundLabel);
