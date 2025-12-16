@@ -1,11 +1,10 @@
 @use 'colors.scss'as *;
 
 .tooltips {
-    background-color: #F5F5F5;
+    background-color: $bcg-dark-f5;
     position: absolute;
-    background-color: $bcg-darkest;
     border-radius: 6px;
-    padding: 1px 3px;
+    padding: 3px 8px;
 }
 
 .tooltips-content {
