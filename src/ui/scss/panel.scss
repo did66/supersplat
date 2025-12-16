@@ -90,15 +90,25 @@
         align-items: center;
         justify-content: space-between;
         padding: 20px 0;
-		cursor: pointer;
+        cursor: pointer;
+
+        .arrow-icon {
+            transition: transform 0.2s ease;
+            width: 20px;
+            height: 20px;
+        }
     }
 
     .transform-header-title {
         font-weight: 600;
     }
 
+    .transform-panel-box,
+    .color-panel-box {
+        padding-bottom: 15px;
+    }
+
     .panel-item-box {
-        padding-bottom: 20px;
         border-bottom: 1px solid $bcg-dark-f5;
 
         .btn-primary {
@@ -141,10 +151,6 @@
         flex-direction: row;
         flex-grow: 1;
         align-items: center;
+        padding-bottom: 20px;
     }
-
-
-
-
-
 }

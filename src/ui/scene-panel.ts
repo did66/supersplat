@@ -83,16 +83,31 @@ class ScenePanel extends Container {
 
 		// 模型集合
 
+		const splatListContainer = new Container({
+			class: 'panel-item-box'
+		});
+		const titleCollectionBox = new Container({
+			class: 'title-box'
+		});
 		const collectionTitle = new Label({
 			text: localize('panel.scene-manager.collection'),
 			class: 'transform-header-title'
 		});
-		const splatList = new SplatList(events);
+		const collectionArrow = createSvg(arrowSvg);
+		collectionArrow.classList.add('arrow-icon');
+		titleCollectionBox.append(collectionTitle);
+		titleCollectionBox.dom.appendChild(collectionArrow);
 
-		const splatListContainer = new Container({
-			class: 'panel-item-box'
+		const splatList = new SplatList(events);
+		let collectionExpanded = true;
+
+		titleCollectionBox.on('click', () => {
+			collectionExpanded = !collectionExpanded;
+			splatList.hidden = !collectionExpanded;
+			collectionArrow.style.transform = collectionExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
 		});
-		splatListContainer.append(collectionTitle);
+
+		splatListContainer.append(titleCollectionBox);
 		splatListContainer.append(splatList);
 
 
@@ -101,24 +116,54 @@ class ScenePanel extends Container {
 		const transformBox = new Container({
 			class: 'panel-item-box'
 		});
-
+		const titleTransformBox = new Container({
+			class: 'title-box'
+		});
 		const transformTitle = new Label({
 			text: localize('panel.scene-manager.transform'),
 			class: 'transform-header-title'
 		});
-		transformBox.append(transformTitle);
-		transformBox.append(new Transform(events))
+		const transformArrow = createSvg(arrowSvg);
+		transformArrow.classList.add('arrow-icon');
+		titleTransformBox.append(transformTitle);
+		titleTransformBox.dom.appendChild(transformArrow);
+
+		const transformPanel = new Transform(events);
+		let transformExpanded = false;
+
+		const transformPanelBox = new Container({
+			class: 'transform-panel-box'
+		});
+		transformPanelBox.append(transformPanel);
+		transformPanelBox.hidden = transformExpanded;
+
+		titleTransformBox.on('click', () => {
+			transformExpanded = !transformExpanded;
+			transformPanelBox.hidden = !transformExpanded;
+			transformArrow.style.transform = transformExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+		});
+
+		transformBox.append(titleTransformBox);
+		transformBox.append(transformPanelBox);
 
 		//打印
 
 		const printBox = new Container({
 			class: 'panel-item-box'
 		});
-
+		const titlePrintBox = new Container({
+			class: 'title-box'
+		});
 		const printTitle = new Label({
 			text: localize('panel.scene-manager.print'),
 			class: 'transform-header-title'
 		});
+		const printArrow = createSvg(arrowSvg);
+		printArrow.classList.add('arrow-icon');
+		titlePrintBox.append(printTitle);
+		titlePrintBox.dom.appendChild(printArrow);
+
+		let printExpanded = true;
 
 		// Size row
 		const sizeRow = new Container({
@@ -170,17 +215,33 @@ class ScenePanel extends Container {
 		});
 		const titleColorBox = new Container({
 			class: 'title-box'
-		})
+		});
 		const colorTitle = new Label({
 			class: 'transform-header-title',
 			text: localize('panel.model-controls')
 		});
+		const colorArrow = createSvg(arrowSvg);
+		colorArrow.classList.add('arrow-icon');
 		titleColorBox.append(colorTitle);
-		titleColorBox.dom.appendChild(createSvg(arrowSvg));
+		titleColorBox.dom.appendChild(colorArrow);
+
 		const colorPanel = new ColorPanel(events, tooltips);
 
+		const colorPanelItem = new Container({
+			class: 'color-panel-box'
+		});
+		colorPanelItem.append(colorPanel);
+		let colorExpanded = false;
+		colorPanelItem.hidden = colorExpanded;
+
+		titleColorBox.on('click', () => {
+			colorExpanded = !colorExpanded;
+			colorPanelItem.hidden = !colorExpanded;
+			colorArrow.style.transform = colorExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+		});
+
 		colorPanelBox.append(titleColorBox);
-		colorPanelBox.append(colorPanel);
+		colorPanelBox.append(colorPanelItem);
 
 
 
@@ -198,8 +259,18 @@ class ScenePanel extends Container {
 
 
 
-		printBox.append(printTitle);
-		printBox.append(sizeRow);
+		// 创建打印内容容器
+		const printContent = new Container();
+		printContent.append(sizeRow);
+
+		titlePrintBox.on('click', () => {
+			printExpanded = !printExpanded;
+			printContent.hidden = !printExpanded;
+			printArrow.style.transform = printExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+		});
+
+		printBox.append(titlePrintBox);
+		printBox.append(printContent);
 
 
 		// Update size values based on scene bound or print region

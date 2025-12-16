@@ -1,8 +1,8 @@
-@use 'colors.scss' as *;
+@use 'colors.scss'as *;
 
 .splat-list {
-    min-height: 80px;
-    padding: 4px 0px;
+    min-height: 50px;
+    padding-bottom: 20px;
 
     .splat-item {
         display: flex;
