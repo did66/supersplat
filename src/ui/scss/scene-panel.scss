@@ -5,21 +5,21 @@
     border-radius: 10px;
     background: #FFF;
     box-shadow: 0 6px 8px 0 #F5F5F5;
-    padding: 0 20px;
-    padding-bottom: 20px;
     box-sizing: border-box;
-    max-height: 85vh;
-    overflow-y: auto;
     position: fixed;
 }
 
 .collapsed #scene-panel {
-    width: 91px;
-    height: 44px;
+    width: 125px;
     overflow: hidden;
-    border-radius: 0 !important;
     padding-bottom: 0;
 }
+
+.collapsed .step-box,
+.collapsed .bottom-box {
+    display: none;
+}
+
 
 .splat-list-container {
     max-height: 300px;

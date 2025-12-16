@@ -10,6 +10,7 @@ import { Tooltips } from './tooltips';
 import { Transform } from './transform';
 import { ColorPanel } from './color-panel';
 import autoareaSvg from './svg/autoarea.svg';
+import arrowSvg from './svg/arrowSvg.svg';
 
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
@@ -67,8 +68,8 @@ class ScenePanel extends Container {
 		collapse.on('click', toggleCollapsed);
 
 		// sceneHeader.append(sceneIcon);
-		// sceneHeader.append(sceneLabel);
-		sceneHeader.append(sceneImport);
+		sceneHeader.append(sceneLabel);
+		// sceneHeader.append(sceneImport);
 		sceneHeader.append(collapse);
 		// sceneHeader.append(sceneNew);
 
@@ -80,39 +81,38 @@ class ScenePanel extends Container {
 			events.invoke('doc.new');
 		});
 
-		tooltips.register(sceneImport, 'Import', 'right');
-		tooltips.register(sceneNew, 'New Scene', 'top');
+		// 模型集合
 
-		const colorPanelBox = new Container({
-			class: 'color-panel-box'
+		const collectionTitle = new Label({
+			text: localize('panel.scene-manager.collection'),
+			class: 'transform-header-title'
 		});
-		const colorPanel = new ColorPanel(events, tooltips);
-		colorPanelBox.append(colorPanel);
-
-
 		const splatList = new SplatList(events);
 
 		const splatListContainer = new Container({
-			class: 'splat-list-container'
+			class: 'panel-item-box'
 		});
+		splatListContainer.append(collectionTitle);
 		splatListContainer.append(splatList);
 
-		const transformHeader = new Container({
-			class: 'panel-header'
+
+		// 模型变换
+
+		const transformBox = new Container({
+			class: 'panel-item-box'
 		});
 
 		const transformTitle = new Label({
 			text: localize('panel.scene-manager.transform'),
 			class: 'transform-header-title'
 		});
+		transformBox.append(transformTitle);
+		transformBox.append(new Transform(events))
 
-		const transformLabel = new Label({
-			text: localize('panel.scene-manager.transform'),
-			class: 'panel-header-label'
-		});
+		//打印
 
 		const printBox = new Container({
-			class: 'print-box'
+			class: 'panel-item-box'
 		});
 
 		const printTitle = new Label({
@@ -164,6 +164,15 @@ class ScenePanel extends Container {
 		sizeRow.append(sizeLabel);
 		sizeRow.append(sizeInputsContainer);
 
+		// 模型调色
+		const colorPanelBox = new Container({
+			class: 'panel-item-box'
+		});
+		const colorPanel = new ColorPanel(events, tooltips);
+		colorPanelBox.append(colorPanel);
+
+
+
 		// AutoArea button
 		const autoAreaButton = new Container({
 			class: 'btn-primary',
@@ -180,7 +189,7 @@ class ScenePanel extends Container {
 
 		printBox.append(printTitle);
 		printBox.append(sizeRow);
-		printBox.append(autoAreaButton);
+
 
 		// Update size values based on scene bound or print region
 		let unit = 3;// 高度，默认值，会被 print-region-tool 的 change 事件更新
@@ -324,19 +333,28 @@ class ScenePanel extends Container {
 			events.fire('upload.modelAndViews')
 		})
 
-		// transformHeader.append(transformLabel);
+		const stepBox = new Container({
+			class: 'step-box'
+		})
+		stepBox.append(splatListContainer)
+		stepBox.append(transformBox)
+		stepBox.append(colorPanelBox)
+		stepBox.append(printBox)
+
+		const bottomBox = new Container({
+			class: 'bottom-box'
+		})
+		bottomBox.append(autoAreaButton)
+		bottomBox.append(uploadButton)
+
 
 		this.append(sceneHeader);
-		// this.append(splatListContainer);
-		this.append(transformHeader);
-		this.append(new Transform(events));
-		this.append(colorPanelBox);
-		this.append(printBox);
-		this.append(uploadButton);
-		// this.append(new Element({
-		// 	class: 'panel-header',
-		// 	height: 20
-		// }));
+		this.append(stepBox)
+		this.append(bottomBox)
+
+		tooltips.register(sceneImport, 'Import', 'right');
+		tooltips.register(sceneNew, 'New Scene', 'top');
+
 	}
 }
 

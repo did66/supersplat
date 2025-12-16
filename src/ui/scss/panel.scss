@@ -14,9 +14,9 @@
         align-items: center;
         justify-content: space-between;
         background-color: $bcg-dark;
-        padding: 10px 0;
-        border-bottom: 1px solid $bcg-dark-f5;
-        margin-bottom: 20px;
+        padding: 0 20px;
+        border-bottom: 3px solid #F8F3EE;
+        height: 44px;
 
         &>.panel-import-button {
             width: 24px;
@@ -25,10 +25,10 @@
         }
 
         &>.panel-header-label {
-            color: $text-primary;
-            font-weight: bold;
+            color: #C89F7D;
+            font-weight: 600;
             flex-grow: 1;
-            text-transform: uppercase;
+            font-size: 16px;
         }
     }
 
@@ -69,21 +69,34 @@
         margin: 0px;
     }
 
+    .step-box {
+        max-height: 60vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 20px;
+    }
+
+    .bottom-box {
+        padding: 20px;
+        box-shadow: 0 -1px 3px 0 #F5F5F5;
+
+        .btn-warning {
+            margin-top: 20px;
+        }
+    }
+
     .transform-header-title {
         font-weight: 600;
         margin-bottom: 10px;
     }
 
-    .color-panel-box {
-        padding-top: 20px;
-        margin-top: 20px;
-        border-top: 1px solid $bcg-dark-f5;
-    }
-
-    .print-box {
+    .panel-item-box {
         padding: 20px 0;
-        margin-top: 20px;
-        border-top: 1px solid $bcg-dark-f5;
+        border-bottom: 1px solid $bcg-dark-f5;
+
+        .btn-primary {
+            margin-top: 15px;
+        }
     }
 
     .print-size-inputs {
@@ -121,8 +134,6 @@
         flex-direction: row;
         flex-grow: 1;
         align-items: center;
-        border-bottom: 1px solid $bcg-dark-f5;
-        padding-bottom: 20px;
     }
 
 
