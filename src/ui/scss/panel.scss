@@ -85,13 +85,20 @@
         }
     }
 
+    .title-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 0;
+		cursor: pointer;
+    }
+
     .transform-header-title {
         font-weight: 600;
-        margin-bottom: 10px;
     }
 
     .panel-item-box {
-        padding: 20px 0;
+        padding-bottom: 20px;
         border-bottom: 1px solid $bcg-dark-f5;
 
         .btn-primary {

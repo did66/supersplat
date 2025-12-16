@@ -168,7 +168,18 @@ class ScenePanel extends Container {
 		const colorPanelBox = new Container({
 			class: 'panel-item-box'
 		});
+		const titleColorBox = new Container({
+			class: 'title-box'
+		})
+		const colorTitle = new Label({
+			class: 'transform-header-title',
+			text: localize('panel.model-controls')
+		});
+		titleColorBox.append(colorTitle);
+		titleColorBox.dom.appendChild(createSvg(arrowSvg));
 		const colorPanel = new ColorPanel(events, tooltips);
+
+		colorPanelBox.append(titleColorBox);
 		colorPanelBox.append(colorPanel);
 
 

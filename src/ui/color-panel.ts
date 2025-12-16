@@ -53,13 +53,13 @@ class ColorPanel extends Container {
 			text: '\uE146'
 		});
 
-		const label = new Label({
-			class: 'transform-header-title',
-			text: localize('panel.model-controls')
-		});
+		// const label = new Label({
+		// 	class: 'transform-header-title',
+		// 	text: localize('panel.model-controls')
+		// });
 
 		// header.append(icon);
-		header.append(label);
+		// header.append(label);
 
 		// tint
 
