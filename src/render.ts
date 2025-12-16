@@ -558,6 +558,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				modelName: string;
 				modelData: ArrayBuffer;
 				fourViews: Array<{ name: string, position: string, data: ArrayBuffer }>;
+				cover: { name: string, data: ArrayBuffer, position: string };
 			};
 
 			// 获取模型的包围盒，计算高、深、宽比例
@@ -593,6 +594,13 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					: (view.data as any).buffer;
 			});
 
+			// 确保封面图数据是 ArrayBuffer
+			const coverBuffer: ArrayBuffer = data.cover && data.cover.data
+				? (data.cover.data instanceof ArrayBuffer
+					? data.cover.data
+					: (data.cover.data as any).buffer)
+				: null;
+
 			// 验证所有数据都是 ArrayBuffer
 			if (!(modelDataBuffer instanceof ArrayBuffer)) {
 				throw new Error('Model data is not an ArrayBuffer');
@@ -602,10 +610,15 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					throw new Error(`View data at index ${i} is not an ArrayBuffer`);
 				}
 			}
+			if (coverBuffer && !(coverBuffer instanceof ArrayBuffer)) {
+				throw new Error('Cover data is not an ArrayBuffer');
+			}
 
 			// 使用 Transferable Objects 优化大文件传输（零拷贝）
 			// 注意：使用 transferable 后，原始 ArrayBuffer 会被转移，不能再使用
-			const transferables: Transferable[] = [modelDataBuffer, ...viewBuffers];
+			const transferables: Transferable[] = coverBuffer
+				? [modelDataBuffer, ...viewBuffers, coverBuffer]
+				: [modelDataBuffer, ...viewBuffers];
 
 			// 构建消息数据，包含文件信息以便父组件创建 File 对象
 			const message = {
@@ -622,7 +635,13 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					filename: view.name,
 					type: 'image/png',
 					position: view.position
-				}))
+				})),
+				cover: coverBuffer ? {
+					data: coverBuffer,
+					filename: data.cover.name,
+					type: 'image/png',
+					position: data.cover.position
+				} : null
 			};
 
 			// 发送消息到父窗口（使用 transferable 优化）

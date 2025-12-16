@@ -116,8 +116,7 @@ body {
     position: absolute;
     right: 20px;
     bottom: 20px;
-    color: $text-primary;
-    text-shadow: 1px 1px 4px black;
+    color: #F1D4BB;
 }
 
 #cursor-label {
@@ -144,8 +143,8 @@ body {
     position: absolute;
     width: 140px;
     height: 140px;
-    right: 18%;
-    top: 122px;
+    right: 2%;
+    bottom: 20px;
     pointer-events: none;
 }
 
@@ -429,7 +428,6 @@ body {
     &:hover {
         background: $clr-hilight;
         border: 1px solid $clr-hilight;
-        color: #fff;
 
         .btn-label {
             color: #fff;

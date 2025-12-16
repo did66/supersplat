@@ -74,7 +74,7 @@ class EditorUI {
 		// app label
 		const appLabel = new Label({
 			id: 'app-label',
-			text: `BUILT ON SUPERSPLAT v${version}`
+			text: `Built on a customized version of  SUPERSPLAT v${version}`
 		});
 
 		// cursor label

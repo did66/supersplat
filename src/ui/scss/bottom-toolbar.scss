@@ -3,7 +3,7 @@
 #bottom-toolbar {
     position: absolute;
     left: 50%;
-    top: 132px;
+    top: 100px;
     height: 40px;
     transform: translate(-50%, 0);
     padding: 0px 8px;
@@ -68,7 +68,6 @@
     }
 
     &.active {
-        color: $clr-active;
         background-color: $clr-hilight !important;
 
         svg {
