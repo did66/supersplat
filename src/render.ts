@@ -300,12 +300,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				scene.camera.startOffscreenMode(width, height);
 				scene.camera.renderOverlays = showDebug;
 
-				// 3. 设置背景色
-				if (!transparentBg) {
-					scene.camera.entity.camera.clearColor.copy(bgClr);
-				} else {
-					scene.camera.entity.camera.clearColor.set(0, 0, 0, 0);
-				}
+				// 3. 设置背景色（四视图强制使用白色背景）
+				scene.camera.entity.camera.clearColor.copy(bgClr);
 
 				// 4. 设置相机到目标视角（只在离屏模式下）
 				scene.camera.setDistance(targetDistance, 0);
@@ -332,17 +328,15 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				scene.dataProcessor.copyRt(renderTarget, workRenderTarget);
 				await workRenderTarget.colorBuffer.read(0, 0, width, height, { renderTarget: workRenderTarget, data });
 
-				// 9. 应用背景色（非透明）
-				if (!transparentBg) {
-					const pixels = new Uint8ClampedArray(data.buffer);
-					const { r, g, b } = bgClr;
-					for (let j = 0; j < pixels.length; j += 4) {
-						const a = 255 - pixels[j + 3];
-						pixels[j + 0] += r * a;
-						pixels[j + 1] += g * a;
-						pixels[j + 2] += b * a;
-						pixels[j + 3] = 255;
-					}
+				// 9. 应用背景色（四视图强制使用白色背景）
+				const pixels = new Uint8ClampedArray(data.buffer);
+				const { r, g, b } = bgClr;
+				for (let j = 0; j < pixels.length; j += 4) {
+					const a = 255 - pixels[j + 3];
+					pixels[j + 0] += r * a;
+					pixels[j + 1] += g * a;
+					pixels[j + 2] += b * a;
+					pixels[j + 3] = 255;
 				}
 
 				// 10. 压缩图片
@@ -375,13 +369,82 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 最终恢复原始相机状态
 			restoreOriginalCamera();
 
+			// 生成封面图（front 视角，透明背景，500x500）
+			const coverImage = await (async () => {
+				// 恢复原始相机状态
+				restoreOriginalCamera();
+
+				const coverWidth = 500;
+				const coverHeight = 500;
+				const coverView = { name: 'cover', azim: 0, elev: 0 }; // 与 front 视角相同
+
+				// 进入离屏渲染模式
+				scene.camera.startOffscreenMode(coverWidth, coverHeight);
+				scene.camera.renderOverlays = showDebug;
+
+				// 设置透明背景
+				scene.camera.entity.camera.clearColor.set(0, 0, 0, 0);
+
+				// 设置相机到 front 视角
+				scene.camera.setDistance(targetDistance, 0);
+				scene.camera.setFocalPoint(focalPoint, 0);
+				scene.camera.setAzimElev(coverView.azim, coverView.elev, 0);
+				scene.camera.onUpdate(0);
+				scene.forceRender = false;
+
+				// 等待splat排序完成
+				await waitAllSorters(1000);
+
+				// 等待几帧让渲染稳定
+				await waitStableFrames(5);
+
+				// 触发一次离屏渲染
+				scene.lockedRender = true;
+				await postRender();
+
+				// 读取渲染数据
+				const coverData = new Uint8Array(coverWidth * coverHeight * 4);
+				const { renderTarget } = scene.camera.entity.camera;
+				const { workRenderTarget } = scene.camera;
+
+				scene.dataProcessor.copyRt(renderTarget, workRenderTarget);
+				await workRenderTarget.colorBuffer.read(0, 0, coverWidth, coverHeight, { renderTarget: workRenderTarget, data: coverData });
+
+				// 封面图保持透明背景，不应用背景色
+
+				// 压缩图片
+				const coverArrayBuffer = await compressor.compress(
+					new Uint32Array(coverData.buffer),
+					coverWidth,
+					coverHeight
+				);
+
+				// 结束离屏模式
+				scene.camera.endOffscreenMode();
+
+				// 恢复原始相机状态
+				restoreOriginalCamera();
+
+				// 等待一帧
+				await waitStableFrames(1);
+
+				return {
+					name: `${modelName}-cover.png`,
+					data: coverArrayBuffer,
+					position: 'cover'
+				};
+			})();
+
 			// 退出锁定渲染模式
 			scene.lockedRenderMode = false;
 			// 触发一次渲染，确保主视图显示正确的状态
 			scene.forceRender = true;
 
-			// 返回四视图图片数据
-			return fourViewsImages;
+			// 返回四视图图片数据和封面图
+			return {
+				images: fourViewsImages,
+				cover: coverImage
+			};
 
 		} catch (err) {
 			await events.invoke('showPopup', {
@@ -440,27 +503,32 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				offset += buf.byteLength;
 			}
 
-			// 3. 生成四视图
+			// 3. 生成四视图（提高分辨率以提高清晰度）
 			const defaultImageSettings = {
-				width: 500,
-				height: 500,
-				transparentBg: true,
+				width: 1024,
+				height: 1024,
+				transparentBg: false, // 四视图使用白色背景
 				showDebug: false
 			};
-			const fourViewsImages = await events.invoke('render.fourViews', defaultImageSettings) as Array<{ name: string, position: string, data: ArrayBuffer }>;
+			const fourViewsResult = await events.invoke('render.fourViews', defaultImageSettings) as { images: Array<{ name: string, position: string, data: ArrayBuffer }>, cover: { name: string, data: ArrayBuffer, position: string } };
 
-			if (!fourViewsImages || fourViewsImages.length !== 4) {
+			if (!fourViewsResult || !fourViewsResult.images || fourViewsResult.images.length !== 4) {
 				throw new Error('Failed to generate four views');
 			}
 
 			return {
 				modelName,
 				modelData: modelData.buffer, // ArrayBuffer
-				fourViews: fourViewsImages.map(view => ({
+				fourViews: fourViewsResult.images.map(view => ({
 					name: view.name,
 					data: view.data, // ArrayBuffer
 					position: view.position
-				}))
+				})),
+				cover: {
+					name: fourViewsResult.cover.name,
+					data: fourViewsResult.cover.data, // ArrayBuffer
+					position: fourViewsResult.cover.position
+				}
 			};
 
 		} catch (err) {
@@ -481,9 +549,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 		try {
 			// 检查是否在 iframe 中
-			if (window.parent === window) {
-				throw new Error('Not in an iframe. Cannot send message to parent.');
-			}
+			// if (window.parent === window) {
+			// 	throw new Error('Not in an iframe. Cannot send message to parent.');
+			// }
 
 			// 准备数据
 			const data = await events.invoke('prepare.modelAndViews') as {
