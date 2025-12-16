@@ -69,10 +69,6 @@
 
     &.active {
         background-color: $clr-hilight !important;
-
-        svg {
-            color: $clr-active;
-        }
     }
 
     &.disabled {
