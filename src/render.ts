@@ -205,34 +205,55 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const focalPointValue = scene.camera.focalPointTween.value;
 			const azimElevValue = scene.camera.azimElevTween.value;
 			const distanceValue = scene.camera.distanceTween.value;
+			const focalPointTarget = scene.camera.focalPointTween.target;
+			const azimElevTarget = scene.camera.azimElevTween.target;
+			const distanceTarget = scene.camera.distanceTween.target;
 			const orig = {
 				focalPoint: scene.camera.focalPoint.clone(),
 				azim: scene.camera.azim,
 				elev: scene.camera.elevation,
 				distance: scene.camera.distance,
 				focalPointTween: {
-					x: focalPointValue.x,
-					y: focalPointValue.y,
-					z: focalPointValue.z
-				},
-				focalPointTweenSource: {
-					x: scene.camera.focalPointTween.source.x,
-					y: scene.camera.focalPointTween.source.y,
-					z: scene.camera.focalPointTween.source.z
+					value: {
+						x: focalPointValue.x,
+						y: focalPointValue.y,
+						z: focalPointValue.z
+					},
+					source: {
+						x: scene.camera.focalPointTween.source.x,
+						y: scene.camera.focalPointTween.source.y,
+						z: scene.camera.focalPointTween.source.z
+					},
+					target: {
+						x: focalPointTarget.x,
+						y: focalPointTarget.y,
+						z: focalPointTarget.z
+					}
 				},
 				azimElevTween: {
-					azim: azimElevValue.azim,
-					elev: azimElevValue.elev
-				},
-				azimElevTweenSource: {
-					azim: scene.camera.azimElevTween.source.azim,
-					elev: scene.camera.azimElevTween.source.elev
+					value: {
+						azim: azimElevValue.azim,
+						elev: azimElevValue.elev
+					},
+					source: {
+						azim: scene.camera.azimElevTween.source.azim,
+						elev: scene.camera.azimElevTween.source.elev
+					},
+					target: {
+						azim: azimElevTarget.azim,
+						elev: azimElevTarget.elev
+					}
 				},
 				distanceTween: {
-					distance: distanceValue.distance
-				},
-				distanceTweenSource: {
-					distance: scene.camera.distanceTween.source.distance
+					value: {
+						distance: distanceValue.distance
+					},
+					source: {
+						distance: scene.camera.distanceTween.source.distance
+					},
+					target: {
+						distance: distanceTarget.distance
+					}
 				}
 			};
 
@@ -308,21 +329,35 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 			// 恢复原始相机状态的辅助函数 - 直接恢复 tween 值，避免触发事件
 			function restoreOriginalCamera() {
-				// 直接恢复 tween 值，不经过 set 方法，避免触发状态变化和事件
-				scene.camera.focalPointTween.value.x = orig.focalPointTween.x;
-				scene.camera.focalPointTween.value.y = orig.focalPointTween.y;
-				scene.camera.focalPointTween.value.z = orig.focalPointTween.z;
-				scene.camera.focalPointTween.source.x = orig.focalPointTweenSource.x;
-				scene.camera.focalPointTween.source.y = orig.focalPointTweenSource.y;
-				scene.camera.focalPointTween.source.z = orig.focalPointTweenSource.z;
-				scene.camera.azimElevTween.value.azim = orig.azimElevTween.azim;
-				scene.camera.azimElevTween.value.elev = orig.azimElevTween.elev;
-				scene.camera.azimElevTween.source.azim = orig.azimElevTweenSource.azim;
-				scene.camera.azimElevTween.source.elev = orig.azimElevTweenSource.elev;
-				scene.camera.distanceTween.value.distance = orig.distanceTween.distance;
-				scene.camera.distanceTween.source.distance = orig.distanceTweenSource.distance;
-				// 立即更新相机变换，但不触发 forceRender（避免影响主视图）
+				// 直接恢复 tween 的所有值（value, source, target），确保完全恢复
+				// focalPointTween
+				scene.camera.focalPointTween.value.x = orig.focalPointTween.value.x;
+				scene.camera.focalPointTween.value.y = orig.focalPointTween.value.y;
+				scene.camera.focalPointTween.value.z = orig.focalPointTween.value.z;
+				scene.camera.focalPointTween.source.x = orig.focalPointTween.source.x;
+				scene.camera.focalPointTween.source.y = orig.focalPointTween.source.y;
+				scene.camera.focalPointTween.source.z = orig.focalPointTween.source.z;
+				scene.camera.focalPointTween.target.x = orig.focalPointTween.target.x;
+				scene.camera.focalPointTween.target.y = orig.focalPointTween.target.y;
+				scene.camera.focalPointTween.target.z = orig.focalPointTween.target.z;
+				// azimElevTween
+				scene.camera.azimElevTween.value.azim = orig.azimElevTween.value.azim;
+				scene.camera.azimElevTween.value.elev = orig.azimElevTween.value.elev;
+				scene.camera.azimElevTween.source.azim = orig.azimElevTween.source.azim;
+				scene.camera.azimElevTween.source.elev = orig.azimElevTween.source.elev;
+				scene.camera.azimElevTween.target.azim = orig.azimElevTween.target.azim;
+				scene.camera.azimElevTween.target.elev = orig.azimElevTween.target.elev;
+				// distanceTween
+				scene.camera.distanceTween.value.distance = orig.distanceTween.value.distance;
+				scene.camera.distanceTween.source.distance = orig.distanceTween.source.distance;
+				scene.camera.distanceTween.target.distance = orig.distanceTween.target.distance;
+				// 重置 tween 的 timer，确保不会继续过渡
+				scene.camera.focalPointTween.timer = scene.camera.focalPointTween.transitionTime;
+				scene.camera.azimElevTween.timer = scene.camera.azimElevTween.transitionTime;
+				scene.camera.distanceTween.timer = scene.camera.distanceTween.transitionTime;
+				// 更新相机实体变换，确保相机位置正确
 				scene.camera.onUpdate(0);
+				// 确保 forceRender 为 false，避免在退出锁定模式后触发不必要的渲染
 				scene.forceRender = false;
 			}
 
@@ -392,7 +427,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				});
 
 				// 同时下载文件（保持原有功能）
-				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
+				// downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
 				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
