@@ -30,6 +30,7 @@
 
         #popup-text {
             text-wrap: wrap;
+            padding: 20px 10px;
             color: $text-primary;
             margin-bottom: 45px;
         }
@@ -74,18 +75,18 @@
 
             .popup-button {
                 height: 50px;
-                line-height: 48px;
                 width: 145px;
                 border-radius: 10px;
                 border: 1.5px solid #000;
-                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 color: #000;
                 font-size: 20px;
                 font-weight: 500;
                 background: $bcg-primary;
 
-                &:nth-child(1),
-                &:nth-child(3) {
+                &:nth-child(1) {
                     background: $clr-hilight;
                     border: 1.5px solid $clr-hilight;
                 }
