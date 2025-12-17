@@ -581,6 +581,28 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				}
 			};
 
+			// 获取打印区域的 BBOX 坐标
+			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
+			const printRegionBbox = printRegionBound ? (() => {
+				const min = printRegionBound.getMin();
+				const max = printRegionBound.getMax();
+				return [
+					[min.x, min.y, min.z],
+					[max.x, max.y, max.z]
+				];
+			})() : null;
+
+			// 获取原模型的 BBOX 坐标
+			const selected = events.invoke('selection') as Splat;
+			const modelBbox = selected && selected.worldBound ? (() => {
+				const min = selected.worldBound.getMin();
+				const max = selected.worldBound.getMax();
+				return [
+					[min.x, min.y, min.z],
+					[max.x, max.y, max.z]
+				];
+			})() : null;
+
 			// 确保所有数据都是 ArrayBuffer 类型（Transferable）
 			// modelData 应该是 ArrayBuffer（从 modelData.buffer 获取）
 			const modelDataBuffer: ArrayBuffer = data.modelData instanceof ArrayBuffer
@@ -641,7 +663,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					filename: data.cover.name,
 					type: 'image/png',
 					position: data.cover.position
-				} : null
+				} : null,
+				printRegionBbox: printRegionBbox,
+				modelBbox: modelBbox
 			};
 
 			// 发送消息到父窗口（使用 transferable 优化）
