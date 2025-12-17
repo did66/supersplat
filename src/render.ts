@@ -561,28 +561,48 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				cover: { name: string, data: ArrayBuffer, position: string };
 			};
 
-			// 获取模型的包围盒，计算高、深、宽比例
-			const bound = scene.bound;
-			const halfExtents = bound.halfExtents;
-			const width = halfExtents.x * 2;
-			const height = halfExtents.y * 2;
-			const depth = halfExtents.z * 2;
+			// 获取打印区域的 BBOX 坐标
+			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
 
-			// 计算比例（高度为1）
-			const dimensions = {
-				width: width,
-				height: height,
-				depth: depth,
+			// 获取原模型的包围盒，计算高、深、宽比例
+			const selected = events.invoke('selection') as Splat;
+			const modelBound = selected && selected.worldBound ? selected.worldBound : scene.bound;
+			const modelHalfExtents = modelBound.halfExtents;
+			const modelWidth = modelHalfExtents.x * 2;
+			const modelHeight = modelHalfExtents.y * 2;
+			const modelDepth = modelHalfExtents.z * 2;
+
+			// 计算原模型的比例（高度为1）
+			const modelDimensions = {
+				width: modelWidth,
+				height: modelHeight,
+				depth: modelDepth,
 				// 比例（高度为1）
 				ratio: {
-					width: height > 0 ? width / height : 0,
+					width: modelHeight > 0 ? modelWidth / modelHeight : 0,
 					height: 1,
-					depth: height > 0 ? depth / height : 0
+					depth: modelHeight > 0 ? modelDepth / modelHeight : 0
 				}
 			};
 
-			// 获取打印区域的 BBOX 坐标
-			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
+			// 计算打印区域的 dimensions（如果存在打印区域，否则使用原模型的 dimensions）
+			const dimensions = printRegionBound ? (() => {
+				const printHalfExtents = printRegionBound.halfExtents;
+				const printWidth = printHalfExtents.x * 2;
+				const printHeight = printHalfExtents.y * 2;
+				const printDepth = printHalfExtents.z * 2;
+				return {
+					width: printWidth,
+					height: printHeight,
+					depth: printDepth,
+					// 比例（高度为1）
+					ratio: {
+						width: printHeight > 0 ? printWidth / printHeight : 0,
+						height: 1,
+						depth: printHeight > 0 ? printDepth / printHeight : 0
+					}
+				};
+			})() : modelDimensions;
 			const printRegionBbox = printRegionBound ? (() => {
 				const min = printRegionBound.getMin();
 				const max = printRegionBound.getMax();
@@ -593,7 +613,6 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			})() : null;
 
 			// 获取原模型的 BBOX 坐标
-			const selected = events.invoke('selection') as Splat;
 			const modelBbox = selected && selected.worldBound ? (() => {
 				const min = selected.worldBound.getMin();
 				const max = selected.worldBound.getMax();
@@ -650,7 +669,6 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const message = {
 				type: 'supersplat:modelAndViews',
 				modelName: data.modelName,
-				dimensions: dimensions,
 				model: {
 					data: modelDataBuffer,
 					filename: `${data.modelName}.ply`,
@@ -670,6 +688,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				} : null,
 				printRegionBbox: printRegionBbox,
 				modelBbox: modelBbox,
+				modelDimensions: modelDimensions,
+				printRegionDimensions: dimensions,
 				shDegree: shDegree
 			};
 
