@@ -1,5 +1,5 @@
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, MkvOutputFormat, MovOutputFormat, Mp4OutputFormat, Output, StreamTarget, WebMOutputFormat } from 'mediabunny';
-import { Color, path, Vec3 } from 'playcanvas';
+import { Color, GSplatResource, path, Vec3 } from 'playcanvas';
 
 import { ElementType } from './element';
 import { Events } from './events';
@@ -603,6 +603,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				];
 			})() : null;
 
+			// 获取 GS 模型的 SH Degree 值
+			const shDegree = selected && selected.entity && selected.entity.gsplat ?
+				((selected.entity.gsplat.instance.resource as GSplatResource).shBands ?? null) : null;
+
 			// 确保所有数据都是 ArrayBuffer 类型（Transferable）
 			// modelData 应该是 ArrayBuffer（从 modelData.buffer 获取）
 			const modelDataBuffer: ArrayBuffer = data.modelData instanceof ArrayBuffer
@@ -665,7 +669,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					position: data.cover.position
 				} : null,
 				printRegionBbox: printRegionBbox,
-				modelBbox: modelBbox
+				modelBbox: modelBbox,
+				shDegree: shDegree
 			};
 
 			// 发送消息到父窗口（使用 transferable 优化）
