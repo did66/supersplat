@@ -362,12 +362,13 @@ class PrintRegionTool {
 				}
 			}
 
-			// 如果计算出了包围盒，使用它来设置打印区域
+			// 如果计算出了包围盒，使用它来设置打印区域（比模型大10%）
 			if (bound) {
 				this.printRegion.pivot.setPosition(bound.center);
-				this.printRegion.lenX = bound.halfExtents.x * 2;
-				this.printRegion.lenY = bound.halfExtents.y * 2;
-				this.printRegion.lenZ = bound.halfExtents.z * 2;
+				const scale = 1.1; // 增加10%的尺寸
+				this.printRegion.lenX = bound.halfExtents.x * 2 * scale;
+				this.printRegion.lenY = bound.halfExtents.y * 2 * scale;
+				this.printRegion.lenZ = bound.halfExtents.z * 2 * scale;
 			}
 
 			// 如果是第一次激活，保存初始状态（用于重置功能）
