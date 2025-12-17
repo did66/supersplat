@@ -553,18 +553,19 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 	throw new Error('Not in an iframe. Cannot send message to parent.');
 			// }
 
-			// 准备数据
-			const data = await events.invoke('prepare.modelAndViews') as {
-				modelName: string;
-				modelData: ArrayBuffer;
-				fourViews: Array<{ name: string, position: string, data: ArrayBuffer }>;
-				cover: { name: string, data: ArrayBuffer, position: string };
-			};
-
-			// 获取打印区域的 BBOX 坐标
+			// 在生成四视图之前获取所有必要的信息（因为生成四视图会取消打印框选）
+			// 获取打印区域的 BBOX
 			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
+			const printRegionBbox = printRegionBound ? (() => {
+				const min = printRegionBound.getMin();
+				const max = printRegionBound.getMax();
+				return [
+					[min.x, min.y, min.z],
+					[max.x, max.y, max.z]
+				];
+			})() : null;
 
-			// 获取原模型的包围盒，计算高、深、宽比例
+			// 获取原模型信息（在生成四视图之前）
 			const selected = events.invoke('selection') as Splat;
 			const modelBound = selected && selected.worldBound ? selected.worldBound : scene.bound;
 			const modelHalfExtents = modelBound.halfExtents;
@@ -603,14 +604,6 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					}
 				};
 			})() : modelDimensions;
-			const printRegionBbox = printRegionBound ? (() => {
-				const min = printRegionBound.getMin();
-				const max = printRegionBound.getMax();
-				return [
-					[min.x, min.y, min.z],
-					[max.x, max.y, max.z]
-				];
-			})() : null;
 
 			// 获取原模型的 BBOX 坐标
 			const modelBbox = selected && selected.worldBound ? (() => {
@@ -625,6 +618,14 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 获取 GS 模型的 SH Degree 值
 			const shDegree = selected && selected.entity && selected.entity.gsplat ?
 				((selected.entity.gsplat.instance.resource as GSplatResource).shBands ?? null) : null;
+
+			// 准备数据（这里会生成四视图，可能会取消打印框选）
+			const data = await events.invoke('prepare.modelAndViews') as {
+				modelName: string;
+				modelData: ArrayBuffer;
+				fourViews: Array<{ name: string, position: string, data: ArrayBuffer }>;
+				cover: { name: string, data: ArrayBuffer, position: string };
+			};
 
 			// 确保所有数据都是 ArrayBuffer 类型（Transferable）
 			// modelData 应该是 ArrayBuffer（从 modelData.buffer 获取）
@@ -692,6 +693,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				printRegionDimensions: dimensions,
 				shDegree: shDegree
 			};
+			console.log('Sending message11', message);
 
 			// 发送消息到父窗口（使用 transferable 优化）
 			window.parent.postMessage(message, '*', transferables);

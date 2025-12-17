@@ -374,7 +374,9 @@ class PrintRegionTool {
 
 		// 注册获取打印区域包围盒的函数
 		events.function('printRegion.getBound', () => {
-			if (this.printRegion && this.printRegion.enabled) {
+			// 即使 enabled 为 false，只要 printRegion 存在且已初始化，就返回 bounding box
+			// 因为打印区域的信息（lenX, lenY, lenZ, pivot position）在工具被停用后仍然保留
+			if (this.printRegion && this.isInitialized) {
 				return this.getPrintRegionBound();
 			}
 			return null;
