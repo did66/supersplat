@@ -201,12 +201,39 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const focalPoint = bound.center.clone();
 			const focalRadius = bound.halfExtents.length();
 
-			// 保存原始相机状态（用于恢复）
+			// 保存原始相机状态（用于恢复）- 保存完整的 tween 值，确保完全恢复
+			const focalPointValue = scene.camera.focalPointTween.value;
+			const azimElevValue = scene.camera.azimElevTween.value;
+			const distanceValue = scene.camera.distanceTween.value;
 			const orig = {
 				focalPoint: scene.camera.focalPoint.clone(),
 				azim: scene.camera.azim,
 				elev: scene.camera.elevation,
-				distance: scene.camera.distance
+				distance: scene.camera.distance,
+				focalPointTween: {
+					x: focalPointValue.x,
+					y: focalPointValue.y,
+					z: focalPointValue.z
+				},
+				focalPointTweenSource: {
+					x: scene.camera.focalPointTween.source.x,
+					y: scene.camera.focalPointTween.source.y,
+					z: scene.camera.focalPointTween.source.z
+				},
+				azimElevTween: {
+					azim: azimElevValue.azim,
+					elev: azimElevValue.elev
+				},
+				azimElevTweenSource: {
+					azim: scene.camera.azimElevTween.source.azim,
+					elev: scene.camera.azimElevTween.source.elev
+				},
+				distanceTween: {
+					distance: distanceValue.distance
+				},
+				distanceTweenSource: {
+					distance: scene.camera.distanceTween.source.distance
+				}
 			};
 
 			// 计算统一的相机距离-调整四视图大小
@@ -279,11 +306,22 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				await Promise.all(splats.map(s => waitSorterUpdatedFor(s, timeoutPer)));
 			}
 
-			// 恢复原始相机状态的辅助函数
+			// 恢复原始相机状态的辅助函数 - 直接恢复 tween 值，避免触发事件
 			function restoreOriginalCamera() {
-				scene.camera.setFocalPoint(orig.focalPoint, 0);
-				scene.camera.setAzimElev(orig.azim, orig.elev, 0);
-				scene.camera.setDistance(orig.distance, 0);
+				// 直接恢复 tween 值，不经过 set 方法，避免触发状态变化和事件
+				scene.camera.focalPointTween.value.x = orig.focalPointTween.x;
+				scene.camera.focalPointTween.value.y = orig.focalPointTween.y;
+				scene.camera.focalPointTween.value.z = orig.focalPointTween.z;
+				scene.camera.focalPointTween.source.x = orig.focalPointTweenSource.x;
+				scene.camera.focalPointTween.source.y = orig.focalPointTweenSource.y;
+				scene.camera.focalPointTween.source.z = orig.focalPointTweenSource.z;
+				scene.camera.azimElevTween.value.azim = orig.azimElevTween.azim;
+				scene.camera.azimElevTween.value.elev = orig.azimElevTween.elev;
+				scene.camera.azimElevTween.source.azim = orig.azimElevTweenSource.azim;
+				scene.camera.azimElevTween.source.elev = orig.azimElevTweenSource.elev;
+				scene.camera.distanceTween.value.distance = orig.distanceTween.distance;
+				scene.camera.distanceTween.source.distance = orig.distanceTweenSource.distance;
+				// 立即更新相机变换，但不触发 forceRender（避免影响主视图）
 				scene.camera.onUpdate(0);
 				scene.forceRender = false;
 			}
@@ -291,12 +329,12 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 存储四视图图片数据
 			const fourViewsImages: Array<{ name: string, position: string, data: ArrayBuffer }> = [];
 
+			// 在整个渲染过程中保持锁定模式，确保主视图完全不受影响
+			// 注意：不在这里恢复相机状态，避免触发任何更新
+
 			// ---- 主循环：对每个视角严格顺序处理 ----
 			for (const view of views) {
-				// 1. 先恢复原始相机状态（确保场景状态检测系统看到的是原始状态）
-				restoreOriginalCamera();
-
-				// 2. 进入离屏渲染模式（suppressFinalBlit会阻止blit到主画布）
+				// 1. 进入离屏渲染模式（suppressFinalBlit会阻止blit到主画布）
 				scene.camera.startOffscreenMode(width, height);
 				scene.camera.renderOverlays = showDebug;
 
@@ -354,25 +392,22 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				});
 
 				// 同时下载文件（保持原有功能）
-				// downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
+				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
 				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
 
-				// 12. 立即恢复原始相机状态（关键：在场景状态检测之前恢复）
-				restoreOriginalCamera();
-
-				// 13. 等待一帧，让场景状态检测系统看到恢复后的状态
-				await waitStableFrames(1);
+				// 注意：不在每次循环后恢复相机状态，避免触发主视图更新
+				// 只在所有渲染完成后统一恢复
 			}
 
-			// 最终恢复原始相机状态
-			restoreOriginalCamera();
+			// 注意：不在四视图渲染完成后恢复相机状态，避免触发主视图更新
+			// 封面图渲染也需要离屏模式，所以继续使用离屏相机状态
 
 			// 生成封面图（front 视角，透明背景，500x500）
 			const coverImage = await (async () => {
-				// 恢复原始相机状态
-				restoreOriginalCamera();
+				// 封面图与 front 视角相同，相机状态已经在最后一个视角（right）设置好了
+				// 只需要确保是 front 视角状态
 
 				const coverWidth = 500;
 				const coverHeight = 500;
@@ -422,11 +457,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				// 结束离屏模式
 				scene.camera.endOffscreenMode();
 
-				// 恢复原始相机状态
-				restoreOriginalCamera();
-
-				// 等待一帧
-				await waitStableFrames(1);
+				// 注意：不在这里恢复相机状态，避免触发主视图更新
 
 				return {
 					name: `${modelName}-cover.png`,
@@ -434,6 +465,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					position: 'cover'
 				};
 			})();
+
+			// 所有渲染完成后，恢复原始相机状态（只恢复一次，避免多次触发更新）
+			restoreOriginalCamera();
 
 			// 退出锁定渲染模式
 			scene.lockedRenderMode = false;
