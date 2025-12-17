@@ -543,6 +543,53 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 		}
 	});
 
+	// 计算打印区域内模型的大小（用于检查是否超过限制）
+	events.function('calculate.printRegionModelSize', async () => {
+		events.fire('startSpinner');
+
+		try {
+			// setTimeout so spinner has a chance to activate
+			await new Promise<void>((resolve) => {
+				setTimeout(resolve);
+			});
+			// 获取打印区域
+			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
+			if (!printRegionBound) {
+				return 0;
+			}
+
+			// 获取所有可见的模型
+			const splats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
+			if (splats.length === 0) {
+				return 0;
+			}
+
+			// 导入序列化相关模块
+			const { BufferWriter } = await import('./serialize/writer');
+			const { serializePly } = await import('./splat-serialize');
+
+			// 序列化模型数据到内存（使用打印区域过滤）
+			const modelBuffer = new BufferWriter();
+			const serializeSettings = {
+				keepStateData: false,
+				keepWorldTransform: true,
+				keepColorTint: true,
+				printRegion: printRegionBound
+			};
+			await serializePly(splats, serializeSettings, modelBuffer);
+			const buffers = modelBuffer.close();
+
+			// 计算总大小
+			const totalSize = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+			return totalSize;
+		} catch (err) {
+			console.error('Failed to calculate model size:', err);
+			return 0;
+		} finally {
+			events.fire('stopSpinner');
+		}
+	});
+
 	// 通过 postMessage 发送模型数据和四视图到父组件
 	events.function('send.modelAndViewsToParent', async () => {
 		events.fire('startSpinner');
@@ -693,7 +740,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				printRegionDimensions: dimensions,
 				shDegree: shDegree
 			};
-			console.log('Sending message11', message);
+			console.log('message', message);
 
 			// 发送消息到父窗口（使用 transferable 优化）
 			window.parent.postMessage(message, '*', transferables);

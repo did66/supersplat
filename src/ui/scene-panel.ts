@@ -417,9 +417,26 @@ class ScenePanel extends Container {
 		//打印点击
 		autoAreaButton.dom.addEventListener('click', () => events.fire('tool.printRegion'))
 		//点击上传按钮
-		uploadButton.dom.addEventListener('click', () => {
+		uploadButton.dom.addEventListener('click', async () => {
 			if (!printRegion) return;
-			events.fire('upload.modelAndViews')
+
+			// 先计算打印区域内模型的大小（会显示loading）
+			const modelSize = await events.invoke('calculate.printRegionModelSize') as number;
+			const maxSize = 100 * 1024 * 1024; // 100M in bytes
+
+			if (modelSize > maxSize) {
+				// 模型大小超过100M，显示提示并返回
+				await events.invoke('showPopup', {
+					type: 'info',
+					header: 'Notice',
+					message: 'The selected print content exceeds 100 MB. Please reselect the print area.'
+				});
+
+				return;
+			}
+
+			// 模型大小不超过100M，继续执行上传流程
+			events.fire('upload.modelAndViews');
 		})
 
 		const stepBox = new Container({

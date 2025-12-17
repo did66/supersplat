@@ -3,8 +3,9 @@
  * 允许用户定义和调整打印区域的边界框
  */
 import { Button, Container, NumericInput, SelectInput, Label } from '@playcanvas/pcui';
-import { TranslateGizmo, Vec3 } from 'playcanvas';
+import { BoundingBox, TranslateGizmo, Vec3 } from 'playcanvas';
 
+import { ElementType } from '../element';
 import { PrintRegionShape } from '../print-region-shape';
 import { Events } from '../events';
 import { Scene } from '../scene';
@@ -303,9 +304,10 @@ class PrintRegionTool {
 
 		// 检查是否可以激活工具
 		const canActivate = () => {
-			const selected = events.invoke('selection') as Splat;
-			if (!selected) {
-				// 如果没有选中模型，显示提示弹窗
+			// 检查是否有可见的模型（不一定要选中）
+			const allSplats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
+			if (allSplats.length === 0) {
+				// 如果没有可见模型，显示提示弹窗
 				events.invoke('showPopup', {
 					type: 'info',
 					header: '提示',
@@ -318,13 +320,13 @@ class PrintRegionTool {
 
 		// 激活工具
 		this.activate = () => {
-			// 检查是否有选中的模型
+			// 检查是否有可见的模型
 			if (!canActivate()) {
-				// 不激活工具，直接返回
+				// 如果无法激活，通知工具管理器取消激活状态
+				// 这样可以避免工具管理器认为工具已激活，导致需要点击两次的问题
+				events.fire('tool.deactivate');
 				return;
 			}
-
-			const selected = events.invoke('selection') as Splat;
 
 			this.active = true;
 			this.printRegion.enabled = true;
@@ -334,8 +336,33 @@ class PrintRegionTool {
 				scene.add(this.printRegion);
 			}
 
-			// 每次激活时都重新适配到最新的选中模型
-			const bound = selected.worldBound;
+			// 获取所有可见的模型，计算合并包围盒
+			const allSplats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
+			let bound: BoundingBox | null = null;
+
+			if (allSplats.length > 0) {
+				// 计算所有可见模型的合并包围盒
+				let valid = false;
+				const combinedBound = new BoundingBox();
+
+				for (const splat of allSplats) {
+					const splatBound = splat.worldBound;
+					if (splatBound) {
+						if (!valid) {
+							valid = true;
+							combinedBound.copy(splatBound);
+						} else {
+							combinedBound.add(splatBound);
+						}
+					}
+				}
+
+				if (valid) {
+					bound = combinedBound;
+				}
+			}
+
+			// 如果计算出了包围盒，使用它来设置打印区域
 			if (bound) {
 				this.printRegion.pivot.setPosition(bound.center);
 				this.printRegion.lenX = bound.halfExtents.x * 2;
