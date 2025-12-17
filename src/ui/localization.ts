@@ -1,15 +1,16 @@
 import i18next from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+// import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
 
 const localizeInit = () => {
     return i18next
     .use(Backend)
-    .use(LanguageDetector)
+    // .use(LanguageDetector)
     .init({
-        detection: {
-            order: ['querystring', /* 'cookie', 'localStorage', 'sessionStorage',*/ 'navigator', 'htmlTag']
-        },
+        lng: 'en', // Force English language
+        // detection: {
+        //     order: ['querystring', /* 'cookie', 'localStorage', 'sessionStorage',*/ 'navigator', 'htmlTag']
+        // },
         backend: {
             loadPath: './static/locales/{{lng}}.json'
         },
@@ -34,7 +35,8 @@ const localize = (key: string, options?: LocalizeOptions): string => {
 };
 
 const getLocale = (): string => {
-    return i18next.language || 'en';
+    // return i18next.language || 'en';
+    return 'en'; // Always return English
 };
 
 const formatInteger = (value: number): string => {
