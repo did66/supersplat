@@ -103,17 +103,48 @@ class ScenePanel extends Container {
 		titleCollectionBox.append(collectionTitle);
 		titleCollectionBox.dom.appendChild(collectionArrow);
 
+		const splatBox = new Container({
+			class: 'splat-box'
+		});
+
+		const uploadTipsBox = new Container({
+			class: 'upload-tips-box'
+		});
+		const uploadSvg = createSvg(sceneImportSvg);
+		const uploadTips1 = new Container({
+			class: 'upload-tips-text'
+		})
+		uploadTips1.dom.append('Click / Drag files')
+		const uploadTips2 = new Container({
+			class: 'upload-tips-text'
+		})
+		uploadTips2.dom.append('Supported Formats: .ply')
+		const uploadTipsContent = new Container({
+			class: 'upload-tips-content'
+		})
+		uploadTipsContent.append(uploadTips1)
+		uploadTipsContent.append(uploadTips2)
+
+		uploadTipsBox.append(uploadSvg)
+		uploadTipsBox.append(uploadTipsContent)
+
+
+
 		const splatList = new SplatList(events);
+		splatBox.append(uploadTipsBox)
+		splatBox.append(splatList)
+
+
 		let collectionExpanded = true;
 
 		titleCollectionBox.on('click', () => {
 			collectionExpanded = !collectionExpanded;
-			splatList.hidden = !collectionExpanded;
+			splatBox.hidden = !collectionExpanded;
 			collectionArrow.style.transform = collectionExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
 		});
 
 		splatListContainer.append(titleCollectionBox);
-		splatListContainer.append(splatList);
+		splatListContainer.append(splatBox);
 
 
 		// 模型变换

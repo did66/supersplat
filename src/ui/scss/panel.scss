@@ -153,4 +153,21 @@
         align-items: center;
         padding-bottom: 20px;
     }
+
+    .upload-tips-box {
+        text-align: center;
+        cursor: pointer;
+
+        .upload-tips-content {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .upload-tips-text {
+            color: #999999;
+            font-size: 12px;
+            line-height: 16px;
+        }
+    }
+
 }
