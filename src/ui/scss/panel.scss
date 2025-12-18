@@ -166,6 +166,7 @@
     .title-upload-svg-box {
         svg {
             width: 20px;
+            height: 20px;
         }
     }
 
@@ -173,6 +174,11 @@
         text-align: center;
         cursor: pointer;
         padding-bottom: 20px;
+
+        svg {
+            width: 30px;
+            height: 30px;
+        }
 
         .upload-tips-content {
             text-align: center;
