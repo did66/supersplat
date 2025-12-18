@@ -3,7 +3,7 @@ import { Container, Element, Label, NumericInput, Button } from '@playcanvas/pcu
 import { Events } from '../events';
 import { localize } from './localization';
 import { SplatList } from './splat-list';
-import sceneImportSvg from './svg/upload-btn.svg';
+import sceneImportSvg from './svg/uploadSvg.svg';
 import sceneNewSvg from './svg/new.svg';
 import collapsedSvg from './svg/collapsed.svg';
 import expandSvg from './svg/expandSvg.svg';
@@ -531,6 +531,7 @@ class ScenePanel extends Container {
 
 		tooltips.register(sceneImport, 'Import', 'right');
 		tooltips.register(sceneNew, 'New Scene', 'top');
+		tooltips.register(titleUploadSvgBox, 'Add More Files', 'bottom');
 
 	}
 }

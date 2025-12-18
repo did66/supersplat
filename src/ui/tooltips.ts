@@ -47,12 +47,12 @@ class Tooltips extends Container {
 					case 'top':
 						style.left = `${midx}px`;
 						style.top = `${rect.top}px`;
-						style.transform = 'translate(-50%, calc(-100% - 10px))';
+						style.transform = 'translate(-50%, calc(-100% - 5px))';
 						break;
 					case 'bottom':
 						style.left = `${midx}px`;
 						style.top = `${rect.bottom}px`;
-						style.transform = 'translate(-50%, 10px)';
+						style.transform = 'translate(-50%, 0)';
 						break;
 				}
 
