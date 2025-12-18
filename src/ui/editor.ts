@@ -259,17 +259,17 @@ class EditorUI {
 			if (printRegion && isPrintRegionActive) {
 				// 保存原始选择
 				const originalSelection = events.invoke('selection') as any;
-				
+
 				// 获取所有模型
 				const allSplats = events.invoke('scene.allSplats') as any[] || [];
-				
+
 				// 对每个模型应用打印区域选择
 				for (const splat of allSplats) {
 					if (!splat.visible) continue;
-					
+
 					// 临时选中当前模型
 					events.fire('selection', splat);
-					
+
 					// 1. 先选择打印区域内的内容
 					const center = printRegion.center;
 					const halfExtents = printRegion.halfExtents;

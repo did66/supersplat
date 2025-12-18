@@ -427,7 +427,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				});
 
 				// 同时下载文件（保持原有功能）
-				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
+				// downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
 				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
@@ -545,8 +545,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const modelName = removeExtension(selected.name ?? 'SuperSplat');
 
 			// 2. 获取模型数据（序列化为PLY格式）
-			// 获取所有可见的模型，确保包含所有模型而不仅仅是选中的模型
-			const splats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
+			// 使用 scene.splats 获取所有可见且有数据的模型（与 scene.export 保持一致）
+			const splats = events.invoke('scene.splats') as Splat[];
 			if (splats.length === 0) {
 				throw new Error('No visible splats to upload');
 			}
@@ -555,18 +555,13 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const { BufferWriter } = await import('./serialize/writer');
 			const { serializePly } = await import('./splat-serialize');
 
-			// 获取打印区域（如果存在）
-			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
-
 			// 序列化模型数据到内存
+			// 注意：由于在 upload.modelAndViews 中已经对所有模型进行了打印区域裁剪（删除了打印区域外的点）
+			// 所以这里直接序列化所有可见模型即可，不需要再使用 printRegion 选项过滤
+			// 使用与 scene.export PLY 相同的序列化设置
 			const modelBuffer = new BufferWriter();
 			const serializeSettings = {
-				keepStateData: false,
-				keepWorldTransform: true,
-				keepColorTint: true,
-				// 如果存在打印区域，使用 printRegion 选项来过滤点
-				// 这样即使没有删除点，也能只序列化打印区域内的点
-				printRegion: printRegionBound || undefined
+				maxSHBands: events.invoke('view.bands') ?? 3
 			};
 			await serializePly(splats, serializeSettings, modelBuffer);
 			const buffers = modelBuffer.close();
@@ -782,6 +777,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			if (coverBuffer && !(coverBuffer instanceof ArrayBuffer)) {
 				throw new Error('Cover data is not an ArrayBuffer');
 			}
+
+			// 保存并导出 PLY 文件
+			// const plyFilename = `${data.modelName}.ply`;
+			// downloadFile(modelDataBuffer, plyFilename);
 
 			// 使用 Transferable Objects 优化大文件传输（零拷贝）
 			// 注意：使用 transferable 后，原始 ArrayBuffer 会被转移，不能再使用
