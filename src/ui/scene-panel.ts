@@ -94,13 +94,24 @@ class ScenePanel extends Container {
 		const titleCollectionBox = new Container({
 			class: 'title-box'
 		});
+		const titleLabelBox = new Container({
+			class: 'title-label-box'
+		});
 		const collectionTitle = new Label({
 			text: localize('panel.scene-manager.collection'),
 			class: 'transform-header-title'
 		});
+
+		const titleUploadSvgBox = new Container({
+			class: 'title-upload-svg-box'
+		});
+		titleUploadSvgBox.dom.appendChild(createSvg(sceneImportSvg));
+		titleLabelBox.append(collectionTitle)
+		titleLabelBox.append(titleUploadSvgBox)
+
 		const collectionArrow = createSvg(arrowSvg);
 		collectionArrow.classList.add('arrow-icon');
-		titleCollectionBox.append(collectionTitle);
+		titleCollectionBox.append(titleLabelBox);
 		titleCollectionBox.dom.appendChild(collectionArrow);
 
 		const splatBox = new Container({
@@ -131,9 +142,37 @@ class ScenePanel extends Container {
 
 
 		const splatList = new SplatList(events);
-		splatBox.append(uploadTipsBox)
-		splatBox.append(splatList)
+		splatBox.append(uploadTipsBox);
+		splatBox.append(splatList);
 
+		titleUploadSvgBox.on('click', async () => {
+			await events.invoke('scene.import');
+		});
+
+		uploadTipsBox.on('click', async () => {
+			await events.invoke('scene.import');
+		});
+
+		// 根据是否有模型来控制显示
+		const updateVisibility = () => {
+			const allSplats = events.invoke('scene.allSplats') || [];
+			const hasModels = allSplats.length > 0;
+			splatList.hidden = !hasModels;
+			titleUploadSvgBox.hidden = !hasModels;
+			uploadTipsBox.hidden = hasModels;
+		};
+
+		// 初始化时检查
+		updateVisibility();
+
+		// 监听模型添加和移除事件
+		events.on('scene.elementAdded', () => {
+			updateVisibility();
+		});
+
+		events.on('scene.elementRemoved', () => {
+			updateVisibility();
+		});
 
 		let collectionExpanded = true;
 

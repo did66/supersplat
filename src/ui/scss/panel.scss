@@ -154,6 +154,15 @@
         padding-bottom: 20px;
     }
 
+    .title-label-box {
+        display: flex;
+        align-items: center;
+
+        .transform-header-title {
+            margin-right: 10px;
+        }
+    }
+
     .upload-tips-box {
         text-align: center;
         cursor: pointer;
