@@ -145,7 +145,8 @@ class ScenePanel extends Container {
 		splatBox.append(uploadTipsBox);
 		splatBox.append(splatList);
 
-		titleUploadSvgBox.on('click', async () => {
+		titleUploadSvgBox.on('click', async (evt) => {
+			evt.stopPropagation();
 			await events.invoke('scene.import');
 		});
 
