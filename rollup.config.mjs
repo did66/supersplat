@@ -13,6 +13,7 @@ import scss from 'rollup-plugin-scss';
 import sass from 'sass';
 
 import copyAndWatch from './copy-and-watch.mjs';
+import { readFileSync } from 'fs';
 
 // prod is release build
 if (process.env.BUILD_TYPE === 'prod') {
@@ -23,6 +24,10 @@ const BUILD_TYPE = process.env.BUILD_TYPE || 'release';
 const ENGINE_DIR = path.resolve(`node_modules/playcanvas/build/playcanvas${BUILD_TYPE === 'debug' ? '.dbg' : ''}/src/index.js`);
 const PCUI_DIR = path.resolve('node_modules/@playcanvas/pcui');
 const HREF = process.env.BASE_HREF || '';
+
+// 读取 package.json 获取版本号
+const packageJson = JSON.parse(readFileSync('package.json', 'utf-8'));
+const VERSION = packageJson.version;
 
 const outputHeader = () => {
     const BLUE_OUT = '\x1b[34m';
@@ -52,7 +57,27 @@ const application = {
                 {
                     src: 'src/index.html',
                     transform: (contents, filename) => {
-                        return contents.toString().replace('__BASE_HREF__', HREF);
+                        let html = contents.toString();
+                        // 替换 BASE_HREF
+                        html = html.replace('__BASE_HREF__', HREF);
+                        // 为所有资源引用添加版本号查询参数（如果还没有查询参数）
+                        // 处理 JS 文件：./index.js 和 jszip.js
+                        html = html.replace(/src="(\.\/)?([^"?]+\.js)(\?[^"]*)?"/g, (match, prefix, file, query) => {
+                            return `src="${prefix || ''}${file}?v=${VERSION}"`;
+                        });
+                        // 处理 CSS 文件：./index.css
+                        html = html.replace(/href="\.\/([^"?]+\.css)(\?[^"]*)?"/g, (match, file, query) => {
+                            return `href="./${file}?v=${VERSION}"`;
+                        });
+                        // 处理 manifest.json
+                        html = html.replace(/href="\.\/(manifest\.json)(\?[^"]*)?"/g, (match, file, query) => {
+                            return `href="./${file}?v=${VERSION}"`;
+                        });
+                        // 处理 service worker 注册
+                        html = html.replace(/sw\.register\(['"]\.\/(sw\.js)(\?[^'"]*)?['"]\)/g, (match, file, query) => {
+                            return `sw.register('./${file}?v=${VERSION}')`;
+                        });
+                        return html;
                     }
                 },
                 { src: 'src/manifest.json' },

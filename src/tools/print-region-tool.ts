@@ -363,13 +363,13 @@ class PrintRegionTool {
 			}
 
 			// 如果计算出了包围盒，使用它来设置打印区域（比模型大10%）
-			if (bound) {
-				this.printRegion.pivot.setPosition(bound.center);
+				if (bound) {
+					this.printRegion.pivot.setPosition(bound.center);
 				const scale = 1.1; // 增加10%的尺寸
 				this.printRegion.lenX = bound.halfExtents.x * 2 * scale;
 				this.printRegion.lenY = bound.halfExtents.y * 2 * scale;
 				this.printRegion.lenZ = bound.halfExtents.z * 2 * scale;
-			}
+				}
 
 			// 如果是第一次激活，保存初始状态（用于重置功能）
 			if (!this.isInitialized) {
@@ -380,10 +380,10 @@ class PrintRegionTool {
 				this.isInitialized = true;
 			}
 
-			// 更新输入框
-			lenX.value = this.printRegion.lenX;
-			lenY.value = this.printRegion.lenY;
-			lenZ.value = this.printRegion.lenZ;
+				// 更新输入框
+				lenX.value = this.printRegion.lenX;
+				lenY.value = this.printRegion.lenY;
+				lenZ.value = this.printRegion.lenZ;
 
 			this.gizmo.attach([this.printRegion.pivot]);
 			toolbar.hidden = false;

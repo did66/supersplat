@@ -257,24 +257,43 @@ class EditorUI {
 			const isPrintRegionActive = events.invoke('tool.active') === 'printRegion';
 
 			if (printRegion && isPrintRegionActive) {
-				// 1. 先选择打印区域内的内容
-				const center = printRegion.center;
-				const halfExtents = printRegion.halfExtents;
-				const boxParams = [
-					center.x,
-					center.y,
-					center.z,
-					halfExtents.x * 2,  // lenx
-					halfExtents.y * 2,  // leny
-					halfExtents.z * 2   // lenz
-				];
-				events.fire('select.byBox', 'set', boxParams);
+				// 保存原始选择
+				const originalSelection = events.invoke('selection') as any;
+				
+				// 获取所有模型
+				const allSplats = events.invoke('scene.allSplats') as any[] || [];
+				
+				// 对每个模型应用打印区域选择
+				for (const splat of allSplats) {
+					if (!splat.visible) continue;
+					
+					// 临时选中当前模型
+					events.fire('selection', splat);
+					
+					// 1. 先选择打印区域内的内容
+					const center = printRegion.center;
+					const halfExtents = printRegion.halfExtents;
+					const boxParams = [
+						center.x,
+						center.y,
+						center.z,
+						halfExtents.x * 2,  // lenx
+						halfExtents.y * 2,  // leny
+						halfExtents.z * 2   // lenz
+					];
+					events.fire('select.byBox', 'set', boxParams);
 
-				// 2. 反选（这样会选中打印区域外的内容）
-				events.fire('select.invert');
+					// 2. 反选（这样会选中打印区域外的内容）
+					events.fire('select.invert');
 
-				// 3. 删除反选的内容（删除打印区域外的内容）
-				events.fire('select.delete');
+					// 3. 删除反选的内容（删除打印区域外的内容）
+					events.fire('select.delete');
+				}
+
+				// 恢复原始选择
+				if (originalSelection) {
+					events.fire('selection', originalSelection);
+				}
 
 				// 4. 隐藏打印选择框（停用打印区域工具）
 				events.fire('tool.printRegion');

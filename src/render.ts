@@ -427,7 +427,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				});
 
 				// 同时下载文件（保持原有功能）
-				// downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
+				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
 				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
@@ -545,6 +545,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const modelName = removeExtension(selected.name ?? 'SuperSplat');
 
 			// 2. 获取模型数据（序列化为PLY格式）
+			// 获取所有可见的模型，确保包含所有模型而不仅仅是选中的模型
 			const splats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
 			if (splats.length === 0) {
 				throw new Error('No visible splats to upload');
@@ -554,12 +555,18 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const { BufferWriter } = await import('./serialize/writer');
 			const { serializePly } = await import('./splat-serialize');
 
+			// 获取打印区域（如果存在）
+			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
+
 			// 序列化模型数据到内存
 			const modelBuffer = new BufferWriter();
 			const serializeSettings = {
 				keepStateData: false,
 				keepWorldTransform: true,
-				keepColorTint: true
+				keepColorTint: true,
+				// 如果存在打印区域，使用 printRegion 选项来过滤点
+				// 这样即使没有删除点，也能只序列化打印区域内的点
+				printRegion: printRegionBound || undefined
 			};
 			await serializePly(splats, serializeSettings, modelBuffer);
 			const buffers = modelBuffer.close();
