@@ -234,6 +234,10 @@ const registerEditorEvents = (events: Events, editHistory: EditHistory, scene: S
 
         // switch to ortho mode
         scene.camera.ortho = true;
+        
+        // 立即更新相机以刷新 uniform 参数，确保打印区域等 shader 能正确渲染
+        scene.camera.onUpdate(0);
+        scene.forceRender = true;
     });
 
     // returns true if the selected splat has selected gaussians

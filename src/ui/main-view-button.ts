@@ -1,8 +1,8 @@
 import { Container } from '@playcanvas/pcui';
 
 import { Events } from '../events';
-import { Tooltips } from './tooltips';
 import mainViewSvg from './svg/main-view-svg.svg';
+import { Tooltips } from './tooltips';
 
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
@@ -38,7 +38,7 @@ class MainViewButton extends Container {
 
 		let isZAxisView = false;
 
-		// 检测是否是 z 轴视角的函数
+		// 检测是否是 z 轴视角的函数（不再要求 ortho 模式）
 		const checkZAxisView = () => {
 			if ((window as any).scene) {
 				const scene = (window as any).scene;
@@ -49,11 +49,11 @@ class MainViewButton extends Container {
 					if (azim < 0) azim += 360;
 					let elev = camera.elevation % 360;
 					if (elev < 0) elev += 360;
-					const isOrtho = camera.ortho;
 					// 检测 azim 和 elev 是否接近 0（允许小的误差，例如 ±5 度）
+					// 不再检查 ortho 模式，因为按钮点击不切换 ortho 模式
 					const azimNearZero = (azim <= 5 || azim >= 355);
 					const elevNearZero = (elev <= 5 || elev >= 355);
-					return isOrtho && azimNearZero && elevNearZero;
+					return azimNearZero && elevNearZero;
 				}
 			}
 			return false;
@@ -71,9 +71,18 @@ class MainViewButton extends Container {
 			}
 		};
 
-		// 点击事件（使用 pointerdown 与 view-cube 保持一致）
+		// 点击事件（设置到 pz 角度但保持 perspective 模式）
 		button.dom.addEventListener('pointerdown', (e) => {
-			events.fire('camera.align', 'pz');
+			if ((window as any).scene) {
+				const scene = (window as any).scene;
+				// 只设置角度，不切换到 ortho 模式
+				scene.camera.setAzimElev(0, 0);
+				// 延迟检测并更新按钮状态
+				setTimeout(() => {
+					const isZAxis = checkZAxisView();
+					updateButtonState(isZAxis);
+				}, 200);
+			}
 			e.stopPropagation();
 		});
 
