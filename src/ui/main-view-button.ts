@@ -30,11 +30,6 @@ class MainViewButton extends Container {
 		buttonText.textContent = 'Main View';
 		button.appendChild(buttonText);
 
-		// 点击事件
-		button.addEventListener('click', (e) => {
-			events.fire('camera.align', 'pz');
-		});
-
 		this.dom.appendChild(button);
 
 		let isZAxisView = false;
@@ -72,13 +67,25 @@ class MainViewButton extends Container {
 			}
 		};
 
-		// 监听相机对齐事件
-		events.on('camera.align', () => {
-			// 相机对齐后延迟检测，等待相机更新完成
-			setTimeout(() => {
-				const isZAxis = checkZAxisView();
-				updateButtonState(isZAxis);
-			}, 100);
+		// 点击事件（使用 pointerdown 与 view-cube 保持一致）
+		button.addEventListener('pointerdown', (e) => {
+			events.fire('camera.align', 'pz');
+			e.stopPropagation();
+		});
+
+		// 监听相机对齐事件（检查是否是 pz）
+		events.on('camera.align', (axis: string) => {
+			// 只处理 pz 轴对齐，或延迟检测所有对齐
+			if (axis === 'pz') {
+				// 相机对齐后延迟检测，等待相机更新完成
+				setTimeout(() => {
+					const isZAxis = checkZAxisView();
+					updateButtonState(isZAxis);
+				}, 200);
+			} else {
+				// 如果是对齐到其他轴，移除选中状态
+				updateButtonState(false);
+			}
 		});
 
 		// 监听相机更新（用户拖动模型时）
