@@ -8,6 +8,7 @@ import { ColorPanel } from './color-panel';
 import { ExportPopup } from './export-popup';
 import { ImageSettingsDialog } from './image-settings-dialog';
 import { localize, localizeInit } from './localization';
+import { MainViewButton } from './main-view-button';
 import { Menu } from './menu';
 import { ModeToggle } from './mode-toggle';
 import logo from './playcanvas-logo.png';
@@ -74,7 +75,7 @@ class EditorUI {
 		// app label
 		const appLabel = new Label({
 			id: 'app-label',
-			text: `Built on a customized version of  SUPERSPLAT v${version}`
+			text: `Built on a customized version of  SUPERSPLAT v2.16.0`
 		});
 
 		// cursor label
@@ -148,6 +149,10 @@ class EditorUI {
 		events.on('prerender', (cameraMatrix: Mat4) => {
 			viewCube.update(cameraMatrix);
 		});
+
+		// Main View button (固定在底部中间)
+		const mainViewButton = new MainViewButton(events);
+		canvasContainer.append(mainViewButton);
 
 		// main container
 		const mainContainer = new Container({
