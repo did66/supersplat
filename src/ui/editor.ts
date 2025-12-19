@@ -151,7 +151,7 @@ class EditorUI {
 		});
 
 		// Main View button (固定在底部中间)
-		const mainViewButton = new MainViewButton(events);
+		const mainViewButton = new MainViewButton(events, tooltips);
 		canvasContainer.append(mainViewButton);
 
 		// main container

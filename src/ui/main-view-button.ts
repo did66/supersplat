@@ -1,7 +1,8 @@
 import { Container } from '@playcanvas/pcui';
 
 import { Events } from '../events';
-import uploadSvg from './svg/uploadSvg.svg';
+import { Tooltips } from './tooltips';
+import mainViewSvg from './svg/main-view-svg.svg';
 
 const createSvg = (svgString: string) => {
 	const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
@@ -9,7 +10,7 @@ const createSvg = (svgString: string) => {
 };
 
 class MainViewButton extends Container {
-	constructor(events: Events, args = {}) {
+	constructor(events: Events, tooltips: Tooltips, args = {}) {
 		args = {
 			...args,
 			id: 'main-view-button-container'
@@ -17,20 +18,23 @@ class MainViewButton extends Container {
 
 		super(args);
 
-		// 创建按钮元素
-		const button = document.createElement('div');
-		button.id = 'main-view-button';
+		// 创建按钮元素（使用 Container 以支持 tooltips）
+		const button = new Container({
+			id: 'main-view-button'
+		});
 
 		// 添加 SVG 图标
-		const iconSvg = createSvg(uploadSvg);
-		button.appendChild(iconSvg);
+		const iconSvg = createSvg(mainViewSvg);
+		button.dom.appendChild(iconSvg);
 
 		// 添加文本
 		const buttonText = document.createElement('span');
 		buttonText.textContent = 'Main View';
-		button.appendChild(buttonText);
+		button.dom.appendChild(buttonText);
 
-		this.dom.appendChild(button);
+		this.dom.appendChild(button.dom);
+
+		tooltips.register(button, 'View the model as the final printed product.', 'top');
 
 		let isZAxisView = false;
 
@@ -60,15 +64,15 @@ class MainViewButton extends Container {
 			if (isActive !== isZAxisView) {
 				isZAxisView = isActive;
 				if (isActive) {
-					button.classList.add('active');
+					button.dom.classList.add('active');
 				} else {
-					button.classList.remove('active');
+					button.dom.classList.remove('active');
 				}
 			}
 		};
 
 		// 点击事件（使用 pointerdown 与 view-cube 保持一致）
-		button.addEventListener('pointerdown', (e) => {
+		button.dom.addEventListener('pointerdown', (e) => {
 			events.fire('camera.align', 'pz');
 			e.stopPropagation();
 		});
@@ -93,6 +97,7 @@ class MainViewButton extends Container {
 			const isZAxis = checkZAxisView();
 			updateButtonState(isZAxis);
 		});
+
 	}
 }
 
