@@ -558,10 +558,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 序列化模型数据到内存
 			// 注意：由于在 upload.modelAndViews 中已经对所有模型进行了打印区域裁剪（删除了打印区域外的点）
 			// 所以这里直接序列化所有可见模型即可，不需要再使用 printRegion 选项过滤
-			// 使用与 scene.export PLY 相同的序列化设置
+			// 使用 maxSHBands: 0 确保数据与实际导出一致
 			const modelBuffer = new BufferWriter();
 			const serializeSettings = {
-				maxSHBands: events.invoke('view.bands') ?? 0
+				maxSHBands: 0  // 固定使用 0，与实际导出的数据一致
 			};
 			await serializePly(splats, serializeSettings, modelBuffer);
 			const buffers = modelBuffer.close();
@@ -639,14 +639,13 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const { BufferWriter } = await import('./serialize/writer');
 			const { serializePly } = await import('./splat-serialize');
 
-			// 序列化模型数据到内存（使用打印区域过滤）
+			// 序列化模型数据到内存
+			// 注意：由于在 upload.modelAndViews 中已经对所有模型进行了打印区域裁剪（删除了打印区域外的点）
+			// 所以这里直接序列化所有可见模型即可，不需要再使用 printRegion 选项过滤
+			// 使用与 prepare.modelAndViews 相同的序列化设置，确保大小计算准确
 			const modelBuffer = new BufferWriter();
 			const serializeSettings = {
-				keepStateData: false,
-				keepWorldTransform: true,
-				keepColorTint: true,
-				printRegion: printRegionBound,
-				maxSHBands: 0
+				maxSHBands: 0  // 与 prepare.modelAndViews 保持一致
 			};
 			await serializePly(splats, serializeSettings, modelBuffer);
 			const buffers = modelBuffer.close();
@@ -734,10 +733,6 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				];
 			})() : null;
 
-			// 获取 GS 模型的 SH Degree 值
-			const shDegree = selected && selected.entity && selected.entity.gsplat ?
-				((selected.entity.gsplat.instance.resource as GSplatResource).shBands ?? null) : null;
-
 			// 准备数据（这里会生成四视图，可能会取消打印框选）
 			const data = await events.invoke('prepare.modelAndViews') as {
 				modelName: string;
@@ -814,7 +809,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				modelBbox: modelBbox,
 				modelDimensions: modelDimensions,
 				printRegionDimensions: dimensions,
-				shDegree: shDegree
+				shDegree: 0  // 使用序列化时实际使用的 maxSHBands 值（0）
 			};
 
 			// 发送消息到父窗口（使用 transferable 优化）
