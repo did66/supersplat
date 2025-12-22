@@ -521,7 +521,7 @@ const initFileHandler = (scene: Scene, events: Events, dropTarget: HTMLElement) 
 			const defaultFilename = splats.length > 0 ? `${splats[0].name}_print_region` : 'print_region';
 
 			const serializeSettings: SerializeSettings = {
-				maxSHBands: events.invoke('view.bands') ?? 3,
+				maxSHBands: events.invoke('view.bands') ?? 0,
 				printRegion: printRegion
 			};
 

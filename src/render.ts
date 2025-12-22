@@ -561,7 +561,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 使用与 scene.export PLY 相同的序列化设置
 			const modelBuffer = new BufferWriter();
 			const serializeSettings = {
-				maxSHBands: events.invoke('view.bands') ?? 3
+				maxSHBands: events.invoke('view.bands') ?? 0
 			};
 			await serializePly(splats, serializeSettings, modelBuffer);
 			const buffers = modelBuffer.close();
@@ -645,7 +645,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				keepStateData: false,
 				keepWorldTransform: true,
 				keepColorTint: true,
-				printRegion: printRegionBound
+				printRegion: printRegionBound,
+				maxSHBands: 0
 			};
 			await serializePly(splats, serializeSettings, modelBuffer);
 			const buffers = modelBuffer.close();
@@ -815,7 +816,6 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				printRegionDimensions: dimensions,
 				shDegree: shDegree
 			};
-			console.log('message', message);
 
 			// 发送消息到父窗口（使用 transferable 优化）
 			window.parent.postMessage(message, '*', transferables);

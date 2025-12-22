@@ -102,12 +102,7 @@ class ScenePanel extends Container {
 			class: 'transform-header-title'
 		});
 
-		const titleUploadSvgBox = new Container({
-			class: 'title-upload-svg-box'
-		});
-		titleUploadSvgBox.dom.appendChild(createSvg(sceneImportSvg));
 		titleLabelBox.append(collectionTitle)
-		titleLabelBox.append(titleUploadSvgBox)
 
 		const collectionArrow = createSvg(arrowSvg);
 		collectionArrow.classList.add('arrow-icon');
@@ -142,10 +137,23 @@ class ScenePanel extends Container {
 
 
 		const splatList = new SplatList(events);
-		splatBox.append(uploadTipsBox);
-		splatBox.append(splatList);
 
-		titleUploadSvgBox.on('click', async (evt) => {
+
+		const uploadSvgBtnBox = new Container({
+			class: 'upload-svg-btn-box'
+		});
+
+		const uploadSvgBtn = new Container({
+			class: 'btn-primary'
+		});
+		uploadSvgBtn.dom.appendChild(createSvg(sceneImportSvg));
+		const uploadBtnLabel = new Label({
+			class: 'btn-label',
+			text: 'Add More Files'
+		});
+		uploadSvgBtn.append(uploadBtnLabel);
+
+		uploadSvgBtnBox.on('click', async (evt) => {
 			evt.stopPropagation();
 			await events.invoke('scene.import');
 		});
@@ -153,13 +161,17 @@ class ScenePanel extends Container {
 		uploadTipsBox.on('click', async () => {
 			await events.invoke('scene.import');
 		});
+		uploadSvgBtnBox.append(uploadSvgBtn);
+		splatBox.append(uploadTipsBox);
+		splatBox.append(splatList);
+		splatBox.append(uploadSvgBtnBox)
 
 		// 根据是否有模型来控制显示
 		const updateVisibility = () => {
 			const allSplats = events.invoke('scene.allSplats') || [];
 			const hasModels = allSplats.length > 0;
 			splatList.hidden = !hasModels;
-			titleUploadSvgBox.hidden = !hasModels;
+			uploadSvgBtnBox.hidden = !hasModels;
 			uploadTipsBox.hidden = hasModels;
 		};
 
@@ -531,7 +543,6 @@ class ScenePanel extends Container {
 
 		tooltips.register(sceneImport, 'Import', 'right');
 		tooltips.register(sceneNew, 'New Scene', 'top');
-		tooltips.register(titleUploadSvgBox, 'Add More Files', 'bottom');
 
 	}
 }

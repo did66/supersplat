@@ -163,10 +163,14 @@
         }
     }
 
-    .title-upload-svg-box {
+    .upload-svg-btn-box {
         svg {
             width: 20px;
             height: 20px;
+        }
+
+        .btn-primary {
+            margin-top: 5px;
         }
     }
 
