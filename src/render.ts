@@ -673,6 +673,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 			// 在生成四视图之前获取所有必要的信息（因为生成四视图会取消打印框选）
 			// 获取打印区域的 BBOX
+			// 注意：printRegionBound 是世界空间的，而 modelBbox 现在是模型空间的（localBound）
+			// 如果 Python 读取的是原始 PLY 数据（模型空间），那么打印区域也应该转换到模型空间
+			// 但目前先保持世界空间，因为打印区域是场景级别的概念，且多模型时转换较复杂
 			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
 			const printRegionBbox = printRegionBound ? (() => {
 				const min = printRegionBound.getMin();
@@ -686,11 +689,13 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// 获取所有可见的模型（与 prepare.modelAndViews 保持一致）
 			const splats = events.invoke('scene.splats') as Splat[];
 
-			// 计算所有可见模型的合并 bounding box
+			// 计算所有可见模型的合并 bounding box（使用 localBound 而不是 worldBound）
+			// localBound 是模型空间中的 bounding box，更接近原始 PLY 数据
+			// worldBound 包含了模型的变换（旋转、缩放、平移），会导致坐标不一致
 			let mergedModelBound: BoundingBox | null = null;
 			if (splats.length > 0) {
 				// 初始化合并的 bounding box
-				const firstBound = splats[0].worldBound;
+				const firstBound = splats[0].localBound;
 				if (firstBound) {
 					const min = firstBound.getMin();
 					const max = firstBound.getMax();
@@ -699,7 +704,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 					// 遍历所有 splats，合并它们的 bounding box
 					for (let i = 1; i < splats.length; i++) {
-						const bound = splats[i].worldBound;
+						const bound = splats[i].localBound;
 						if (bound) {
 							const splatMin = bound.getMin();
 							const splatMax = bound.getMax();
