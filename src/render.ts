@@ -1,5 +1,5 @@
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, MkvOutputFormat, MovOutputFormat, Mp4OutputFormat, Output, StreamTarget, WebMOutputFormat } from 'mediabunny';
-import { BoundingBox, Color, GSplatResource, path, Vec3 } from 'playcanvas';
+import { BoundingBox, Color, GSplatResource, Mat4, path, Vec3 } from 'playcanvas';
 
 import { ElementType } from './element';
 import { Events } from './events';
@@ -755,22 +755,70 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			};
 
 			// 2. 计算 printRegionBbox 和 printRegionDimensions（基于 print-region-tool.ts 里最终的打印框的数据）
+			// 注意：printRegionBound 是世界空间的，需要转换到模型空间以与 modelBbox 保持一致
 			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
-			const printRegionBbox = printRegionBound ? (() => {
-				const min = printRegionBound.getMin();
-				const max = printRegionBound.getMax();
-				return [
-					[min.x, min.y, min.z],
-					[max.x, max.y, max.z]
-				];
-			})() : null;
 
-			const printRegionDimensions = printRegionBound ? (() => {
-				const printHalfExtents = printRegionBound.halfExtents;
-				const printWidth = printHalfExtents.x * 2;
-				const printHeight = printHalfExtents.y * 2;
-				const printDepth = printHalfExtents.z * 2;
-				return {
+			// 获取所有可见的模型，用于将打印区域从世界空间转换到模型空间
+			const splats = events.invoke('scene.splats') as Splat[];
+
+			let printRegionBbox: number[][] | null = null;
+			let printRegionDimensions = modelDimensions;
+
+			if (printRegionBound && splats.length > 0) {
+				// 将打印区域从世界空间转换到模型空间
+				// 使用第一个 splat 的变换矩阵的逆矩阵进行转换
+				const firstSplat = splats[0];
+				const worldTransform = firstSplat.entity.getWorldTransform();
+				const localTransform = new Mat4();
+				localTransform.copy(worldTransform);
+				localTransform.invert(); // 获取逆矩阵，用于从世界空间转换到模型空间
+
+				// 转换 bounding box 的 8 个角点到模型空间
+				const worldMin = printRegionBound.getMin();
+				const worldMax = printRegionBound.getMax();
+				const worldHalfExtents = printRegionBound.halfExtents;
+
+				// 计算 8 个角点
+				const corners = [
+					new Vec3(worldMin.x, worldMin.y, worldMin.z),
+					new Vec3(worldMax.x, worldMin.y, worldMin.z),
+					new Vec3(worldMin.x, worldMax.y, worldMin.z),
+					new Vec3(worldMax.x, worldMax.y, worldMin.z),
+					new Vec3(worldMin.x, worldMin.y, worldMax.z),
+					new Vec3(worldMax.x, worldMin.y, worldMax.z),
+					new Vec3(worldMin.x, worldMax.y, worldMax.z),
+					new Vec3(worldMax.x, worldMax.y, worldMax.z)
+				];
+
+				// 转换所有角点到模型空间
+				const localCorners = corners.map(corner => {
+					const localCorner = new Vec3();
+					localTransform.transformPoint(corner, localCorner);
+					return localCorner;
+				});
+
+				// 计算模型空间中的 min 和 max
+				let localMin = new Vec3(Infinity, Infinity, Infinity);
+				let localMax = new Vec3(-Infinity, -Infinity, -Infinity);
+				for (const corner of localCorners) {
+					localMin.x = Math.min(localMin.x, corner.x);
+					localMin.y = Math.min(localMin.y, corner.y);
+					localMin.z = Math.min(localMin.z, corner.z);
+					localMax.x = Math.max(localMax.x, corner.x);
+					localMax.y = Math.max(localMax.y, corner.y);
+					localMax.z = Math.max(localMax.z, corner.z);
+				}
+
+				printRegionBbox = [
+					[localMin.x, localMin.y, localMin.z],
+					[localMax.x, localMax.y, localMax.z]
+				];
+
+				// 计算 dimensions
+				const printWidth = localMax.x - localMin.x;
+				const printHeight = localMax.y - localMin.y;
+				const printDepth = localMax.z - localMin.z;
+				printRegionDimensions = {
 					width: printWidth,
 					height: printHeight,
 					depth: printDepth,
@@ -781,7 +829,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 						depth: printHeight > 0 ? printDepth / printHeight : 0
 					}
 				};
-			})() : modelDimensions;
+			}
 
 			// 确保所有数据都是 ArrayBuffer 类型（Transferable）
 			// modelData 应该是 ArrayBuffer（从 modelData.buffer 获取）
@@ -857,7 +905,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				printSize: printSize,  // 打印尺寸选择器的值
 				shDegree: 0  // 使用序列化时实际使用的 maxSHBands 值（0）
 			};
-			console.log('message11', message)
+			console.log('message', message)
 
 			// 发送消息到父窗口（使用 transferable 优化）
 			window.parent.postMessage(message, '*', transferables);
