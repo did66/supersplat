@@ -1,5 +1,5 @@
 import { BufferTarget, EncodedPacket, EncodedVideoPacketSource, MkvOutputFormat, MovOutputFormat, Mp4OutputFormat, Output, StreamTarget, WebMOutputFormat } from 'mediabunny';
-import { Color, GSplatResource, path, Vec3 } from 'playcanvas';
+import { BoundingBox, Color, GSplatResource, path, Vec3 } from 'playcanvas';
 
 import { ElementType } from './element';
 import { Events } from './events';
@@ -683,9 +683,43 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				];
 			})() : null;
 
-			// 获取原模型信息（在生成四视图之前）
-			const selected = events.invoke('selection') as Splat;
-			const modelBound = selected && selected.worldBound ? selected.worldBound : scene.bound;
+			// 获取所有可见的模型（与 prepare.modelAndViews 保持一致）
+			const splats = events.invoke('scene.splats') as Splat[];
+
+			// 计算所有可见模型的合并 bounding box
+			let mergedModelBound: BoundingBox | null = null;
+			if (splats.length > 0) {
+				// 初始化合并的 bounding box
+				const firstBound = splats[0].worldBound;
+				if (firstBound) {
+					const min = firstBound.getMin();
+					const max = firstBound.getMax();
+					const mergedMin = new Vec3(min.x, min.y, min.z);
+					const mergedMax = new Vec3(max.x, max.y, max.z);
+
+					// 遍历所有 splats，合并它们的 bounding box
+					for (let i = 1; i < splats.length; i++) {
+						const bound = splats[i].worldBound;
+						if (bound) {
+							const splatMin = bound.getMin();
+							const splatMax = bound.getMax();
+							mergedMin.x = Math.min(mergedMin.x, splatMin.x);
+							mergedMin.y = Math.min(mergedMin.y, splatMin.y);
+							mergedMin.z = Math.min(mergedMin.z, splatMin.z);
+							mergedMax.x = Math.max(mergedMax.x, splatMax.x);
+							mergedMax.y = Math.max(mergedMax.y, splatMax.y);
+							mergedMax.z = Math.max(mergedMax.z, splatMax.z);
+						}
+					}
+
+					// 创建合并后的 bounding box
+					mergedModelBound = new BoundingBox();
+					mergedModelBound.setMinMax(mergedMin, mergedMax);
+				}
+			}
+
+			// 使用合并后的 bounding box，如果没有则使用 scene.bound
+			const modelBound = mergedModelBound || scene.bound;
 			const modelHalfExtents = modelBound.halfExtents;
 			const modelWidth = modelHalfExtents.x * 2;
 			const modelHeight = modelHalfExtents.y * 2;
@@ -723,10 +757,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				};
 			})() : modelDimensions;
 
-			// 获取原模型的 BBOX 坐标
-			const modelBbox = selected && selected.worldBound ? (() => {
-				const min = selected.worldBound.getMin();
-				const max = selected.worldBound.getMax();
+			// 获取合并后模型的 BBOX 坐标
+			const modelBbox = mergedModelBound ? (() => {
+				const min = mergedModelBound.getMin();
+				const max = mergedModelBound.getMax();
 				return [
 					[min.x, min.y, min.z],
 					[max.x, max.y, max.z]
