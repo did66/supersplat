@@ -574,6 +574,44 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				offset += buf.byteLength;
 			}
 
+			// 计算裁剪后模型的合并 bounding box（基于序列化后的模型数据）
+			// 注意：splats 已经在 upload.modelAndViews 中被打印区域裁剪过了（删除了打印区域外的点）
+			// 所以这里计算的是裁剪后实际模型的 bounding box，用于 modelBbox 和 modelDimensions
+			// 强制更新所有 splats 的 localBound，确保使用最新的 bounding box
+			for (const splat of splats) {
+				splat.makeLocalBoundDirty();
+				// 访问 localBound 以触发重新计算
+				void splat.localBound;
+			}
+
+			let croppedModelBound: BoundingBox | null = null;
+			if (splats.length > 0) {
+				const firstBound = splats[0].localBound;
+				if (firstBound) {
+					const min = firstBound.getMin();
+					const max = firstBound.getMax();
+					const croppedMin = new Vec3(min.x, min.y, min.z);
+					const croppedMax = new Vec3(max.x, max.y, max.z);
+
+					for (let i = 1; i < splats.length; i++) {
+						const bound = splats[i].localBound;
+						if (bound) {
+							const splatMin = bound.getMin();
+							const splatMax = bound.getMax();
+							croppedMin.x = Math.min(croppedMin.x, splatMin.x);
+							croppedMin.y = Math.min(croppedMin.y, splatMin.y);
+							croppedMin.z = Math.min(croppedMin.z, splatMin.z);
+							croppedMax.x = Math.max(croppedMax.x, splatMax.x);
+							croppedMax.y = Math.max(croppedMax.y, splatMax.y);
+							croppedMax.z = Math.max(croppedMax.z, splatMax.z);
+						}
+					}
+
+					croppedModelBound = new BoundingBox();
+					croppedModelBound.setMinMax(croppedMin, croppedMax);
+				}
+			}
+
 			// 3. 生成四视图（提高分辨率以提高清晰度）
 			const defaultImageSettings = {
 				width: 1024,
@@ -599,7 +637,8 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					name: fourViewsResult.cover.name,
 					data: fourViewsResult.cover.data, // ArrayBuffer
 					position: fourViewsResult.cover.position
-				}
+				},
+				croppedModelBound // 裁剪后模型的合并 bounding box（模型空间），基于序列化后的 modelDataBuffer
 			};
 
 		} catch (err) {
@@ -672,10 +711,50 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			// }
 
 			// 在生成四视图之前获取所有必要的信息（因为生成四视图会取消打印框选）
-			// 获取打印区域的 BBOX
-			// 注意：printRegionBound 是世界空间的，而 modelBbox 现在是模型空间的（localBound）
-			// 如果 Python 读取的是原始 PLY 数据（模型空间），那么打印区域也应该转换到模型空间
-			// 但目前先保持世界空间，因为打印区域是场景级别的概念，且多模型时转换较复杂
+			// 准备数据（这里会生成四视图，可能会取消打印框选）
+			const data = await events.invoke('prepare.modelAndViews') as {
+				modelName: string;
+				modelData: ArrayBuffer;
+				fourViews: Array<{ name: string, position: string, data: ArrayBuffer }>;
+				cover: { name: string, data: ArrayBuffer, position: string };
+				croppedModelBound: BoundingBox | null; // 裁剪后模型的合并 bounding box（模型空间），基于序列化后的 modelDataBuffer
+			};
+
+			// 1. 计算 modelBbox 和 modelDimensions（基于 modelDataBuffer 数据，即裁剪后最终的模型）
+			// 使用 prepare.modelAndViews 返回的 croppedModelBound，这是基于序列化后的模型数据计算的
+			const modelBbox = data.croppedModelBound ? (() => {
+				const min = data.croppedModelBound.getMin();
+				const max = data.croppedModelBound.getMax();
+				return [
+					[min.x, min.y, min.z],
+					[max.x, max.y, max.z]
+				];
+			})() : null;
+
+			const modelDimensions = data.croppedModelBound ? (() => {
+				const modelHalfExtents = data.croppedModelBound.halfExtents;
+				const modelWidth = modelHalfExtents.x * 2;
+				const modelHeight = modelHalfExtents.y * 2;
+				const modelDepth = modelHalfExtents.z * 2;
+				return {
+					width: modelWidth,
+					height: modelHeight,
+					depth: modelDepth,
+					// 比例（高度为1）
+					ratio: {
+						width: modelHeight > 0 ? modelWidth / modelHeight : 0,
+						height: 1,
+						depth: modelHeight > 0 ? modelDepth / modelHeight : 0
+					}
+				};
+			})() : {
+				width: 0,
+				height: 0,
+				depth: 0,
+				ratio: { width: 0, height: 1, depth: 0 }
+			};
+
+			// 2. 计算 printRegionBbox 和 printRegionDimensions（基于 print-region-tool.ts 里最终的打印框的数据）
 			const printRegionBound = events.invoke('printRegion.getBound') as any | null;
 			const printRegionBbox = printRegionBound ? (() => {
 				const min = printRegionBound.getMin();
@@ -686,65 +765,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				];
 			})() : null;
 
-			// 获取所有可见的模型（与 prepare.modelAndViews 保持一致）
-			const splats = events.invoke('scene.splats') as Splat[];
-
-			// 计算所有可见模型的合并 bounding box（使用 localBound 而不是 worldBound）
-			// localBound 是模型空间中的 bounding box，更接近原始 PLY 数据
-			// worldBound 包含了模型的变换（旋转、缩放、平移），会导致坐标不一致
-			let mergedModelBound: BoundingBox | null = null;
-			if (splats.length > 0) {
-				// 初始化合并的 bounding box
-				const firstBound = splats[0].localBound;
-				if (firstBound) {
-					const min = firstBound.getMin();
-					const max = firstBound.getMax();
-					const mergedMin = new Vec3(min.x, min.y, min.z);
-					const mergedMax = new Vec3(max.x, max.y, max.z);
-
-					// 遍历所有 splats，合并它们的 bounding box
-					for (let i = 1; i < splats.length; i++) {
-						const bound = splats[i].localBound;
-						if (bound) {
-							const splatMin = bound.getMin();
-							const splatMax = bound.getMax();
-							mergedMin.x = Math.min(mergedMin.x, splatMin.x);
-							mergedMin.y = Math.min(mergedMin.y, splatMin.y);
-							mergedMin.z = Math.min(mergedMin.z, splatMin.z);
-							mergedMax.x = Math.max(mergedMax.x, splatMax.x);
-							mergedMax.y = Math.max(mergedMax.y, splatMax.y);
-							mergedMax.z = Math.max(mergedMax.z, splatMax.z);
-						}
-					}
-
-					// 创建合并后的 bounding box
-					mergedModelBound = new BoundingBox();
-					mergedModelBound.setMinMax(mergedMin, mergedMax);
-				}
-			}
-
-			// 使用合并后的 bounding box，如果没有则使用 scene.bound
-			const modelBound = mergedModelBound || scene.bound;
-			const modelHalfExtents = modelBound.halfExtents;
-			const modelWidth = modelHalfExtents.x * 2;
-			const modelHeight = modelHalfExtents.y * 2;
-			const modelDepth = modelHalfExtents.z * 2;
-
-			// 计算原模型的比例（高度为1）
-			const modelDimensions = {
-				width: modelWidth,
-				height: modelHeight,
-				depth: modelDepth,
-				// 比例（高度为1）
-				ratio: {
-					width: modelHeight > 0 ? modelWidth / modelHeight : 0,
-					height: 1,
-					depth: modelHeight > 0 ? modelDepth / modelHeight : 0
-				}
-			};
-
-			// 计算打印区域的 dimensions（如果存在打印区域，否则使用原模型的 dimensions）
-			const dimensions = printRegionBound ? (() => {
+			const printRegionDimensions = printRegionBound ? (() => {
 				const printHalfExtents = printRegionBound.halfExtents;
 				const printWidth = printHalfExtents.x * 2;
 				const printHeight = printHalfExtents.y * 2;
@@ -761,24 +782,6 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 					}
 				};
 			})() : modelDimensions;
-
-			// 获取合并后模型的 BBOX 坐标
-			const modelBbox = mergedModelBound ? (() => {
-				const min = mergedModelBound.getMin();
-				const max = mergedModelBound.getMax();
-				return [
-					[min.x, min.y, min.z],
-					[max.x, max.y, max.z]
-				];
-			})() : null;
-
-			// 准备数据（这里会生成四视图，可能会取消打印框选）
-			const data = await events.invoke('prepare.modelAndViews') as {
-				modelName: string;
-				modelData: ArrayBuffer;
-				fourViews: Array<{ name: string, position: string, data: ArrayBuffer }>;
-				cover: { name: string, data: ArrayBuffer, position: string };
-			};
 
 			// 确保所有数据都是 ArrayBuffer 类型（Transferable）
 			// modelData 应该是 ArrayBuffer（从 modelData.buffer 获取）
@@ -850,11 +853,11 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				printRegionBbox: printRegionBbox,
 				modelBbox: modelBbox,
 				modelDimensions: modelDimensions,
-				printRegionDimensions: dimensions,
+				printRegionDimensions: printRegionDimensions,
 				printSize: printSize,  // 打印尺寸选择器的值
 				shDegree: 0  // 使用序列化时实际使用的 maxSHBands 值（0）
 			};
-			console.log('message', message)
+			console.log('message11', message)
 
 			// 发送消息到父窗口（使用 transferable 优化）
 			window.parent.postMessage(message, '*', transferables);
