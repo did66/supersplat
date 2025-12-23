@@ -784,6 +784,9 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				? [modelDataBuffer, ...viewBuffers, coverBuffer]
 				: [modelDataBuffer, ...viewBuffers];
 
+			// 获取打印尺寸
+			const printSize = events.invoke('printSize.value') as number || 0;
+
 			// 构建消息数据，包含文件信息以便父组件创建 File 对象
 			const message = {
 				type: 'supersplat:modelAndViews',
@@ -809,8 +812,10 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				modelBbox: modelBbox,
 				modelDimensions: modelDimensions,
 				printRegionDimensions: dimensions,
+				printSize: printSize,  // 打印尺寸选择器的值
 				shDegree: 0  // 使用序列化时实际使用的 maxSHBands 值（0）
 			};
+			console.log('message', message)
 
 			// 发送消息到父窗口（使用 transferable 优化）
 			window.parent.postMessage(message, '*', transferables);

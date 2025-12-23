@@ -24,6 +24,7 @@ class PrintRegionTool {
 	private gizmo: TranslateGizmo;
 	private events: Events;
 	private scene: Scene;
+	private sizeSelect: any; // SelectInput instance
 	// 保存初始状态（第一次激活时的状态）
 	private initialPosition: Vec3 = new Vec3();
 	private initialLenX: number = 2;
@@ -132,7 +133,7 @@ class PrintRegionTool {
 
 
 		// 尺寸选择器
-		const sizeSelect = new SelectInput({
+		this.sizeSelect = new SelectInput({
 			options: sizesOptions.map(option => ({
 				v: option.value,
 				t: `${option.value}cm`
@@ -140,6 +141,7 @@ class PrintRegionTool {
 			defaultValue: sizesOptions[0].value,
 			width: 80
 		});
+		const sizeSelect = this.sizeSelect; // Keep local reference for compatibility
 
 		const sizeSelectBox = new Container({
 			class: 'size-select-box'
@@ -308,11 +310,11 @@ class PrintRegionTool {
 			const allSplats = (scene.getElementsByType(ElementType.splat) as Splat[]).filter(s => s.visible);
 			if (allSplats.length === 0) {
 				// 如果没有可见模型，显示提示弹窗
-				events.invoke('showPopup', {
-					type: 'info',
-					header: '提示',
-					message: '请先选择一个模型'
-				});
+				// events.invoke('showPopup', {
+				// 	type: 'info',
+				// 	header: '提示',
+				// 	message: '请先选择一个模型'
+				// });
 				return false;
 			}
 			return true;
@@ -363,13 +365,13 @@ class PrintRegionTool {
 			}
 
 			// 如果计算出了包围盒，使用它来设置打印区域（比模型大10%）
-				if (bound) {
-					this.printRegion.pivot.setPosition(bound.center);
+			if (bound) {
+				this.printRegion.pivot.setPosition(bound.center);
 				const scale = 1.1; // 增加10%的尺寸
 				this.printRegion.lenX = bound.halfExtents.x * 2 * scale;
 				this.printRegion.lenY = bound.halfExtents.y * 2 * scale;
 				this.printRegion.lenZ = bound.halfExtents.z * 2 * scale;
-				}
+			}
 
 			// 如果是第一次激活，保存初始状态（用于重置功能）
 			if (!this.isInitialized) {
@@ -380,10 +382,10 @@ class PrintRegionTool {
 				this.isInitialized = true;
 			}
 
-				// 更新输入框
-				lenX.value = this.printRegion.lenX;
-				lenY.value = this.printRegion.lenY;
-				lenZ.value = this.printRegion.lenZ;
+			// 更新输入框
+			lenX.value = this.printRegion.lenX;
+			lenY.value = this.printRegion.lenY;
+			lenZ.value = this.printRegion.lenZ;
 
 			this.gizmo.attach([this.printRegion.pivot]);
 			toolbar.hidden = false;
@@ -399,6 +401,14 @@ class PrintRegionTool {
 			// 不删除元素，只是隐藏，保留设置
 			this.active = false;
 		};
+
+		// 注册获取打印尺寸的函数
+		events.function('printSize.value', () => {
+			if (this.sizeSelect) {
+				return parseInt(this.sizeSelect.value) || 0;
+			}
+			return 0;
+		});
 
 		// 注册获取打印区域包围盒的函数
 		events.function('printRegion.getBound', () => {
