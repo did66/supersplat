@@ -4,12 +4,14 @@ import {
 	BLENDMODE_ONE,
 	BLENDMODE_ONE_MINUS_SRC_ALPHA,
 	FILTER_NEAREST,
+	FUNC_LESSEQUAL,
 	PIXELFORMAT_R8,
 	PIXELFORMAT_R16U,
 	Asset,
 	BlendState,
 	BoundingBox,
 	Color,
+	DepthState,
 	Entity,
 	GSplatData,
 	GSplatResource,
@@ -175,6 +177,11 @@ class Splat extends Element {
 			material.setDefine('SH_BANDS', `${Math.min(bands, (instance.resource as GSplatResource).shBands)}`);
 			material.setParameter('splatState', this.stateTexture);
 			material.setParameter('splatTransform', this.transformTexture);
+
+			// 配置深度状态以确保模型之间正确遮挡
+			// 启用深度测试和深度写入，使房间模型能够正确遮挡内部的模型
+			material.depthState = new DepthState(FUNC_LESSEQUAL, true);
+
 			material.update();
 		};
 
