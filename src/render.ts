@@ -258,6 +258,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			};
 
 			// 计算统一的相机距离-调整四视图大小
+			// 增大系数可以让相机离得更远，模型在画面中更小；减小系数则相反
 			const fdist = (focalRadius / scene.camera.sceneRadius) * 1.5;
 			const targetDistance = isFinite(fdist) ? fdist : 1;
 
