@@ -140,7 +140,10 @@ class PrintRegionShape extends Element {
      */
     get printRegionBound(): BoundingBox {
         const result = new BoundingBox();
-        result.center.copy(this.pivot.getPosition());
+        // 使用世界变换获取世界位置，确保坐标正确
+        const worldPos = new Vec3();
+        this.pivot.getWorldTransform().getTranslation(worldPos);
+        result.center.copy(worldPos);
         result.halfExtents.set(this._lenX * 0.5, this._lenY * 0.5, this._lenZ * 0.5);
         return result;
     }
