@@ -262,11 +262,22 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 			const fdist = (focalRadius / scene.camera.sceneRadius) * 1.5;
 			const targetDistance = isFinite(fdist) ? fdist : 1;
 
+			// 获取当前相机的角度，以当前视角作为 front
+			const currentAzim = orig.azim;
+			const currentElev = orig.elev;
+
+			// 归一化角度到 0-360 范围
+			const normalizeAngle = (angle: number) => {
+				angle = angle % 360;
+				return angle < 0 ? angle + 360 : angle;
+			};
+
+			// 以当前视角为 front，其他视角相对于 front 旋转
 			const views = [
-				{ name: 'front', azim: 0, elev: 0 },
-				{ name: 'back', azim: 180, elev: 0 },
-				{ name: 'left', azim: 90, elev: 0 },
-				{ name: 'right', azim: 270, elev: 0 }
+				{ name: 'front', azim: currentAzim, elev: currentElev },
+				{ name: 'back', azim: normalizeAngle(currentAzim + 180), elev: currentElev },
+				{ name: 'left', azim: normalizeAngle(currentAzim + 90), elev: currentElev },
+				{ name: 'right', azim: normalizeAngle(currentAzim - 90), elev: currentElev }
 			];
 
 			if (!compressor) compressor = new PngCompressor();
@@ -447,7 +458,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 
 				const coverWidth = 500;
 				const coverHeight = 500;
-				const coverView = { name: 'cover', azim: 0, elev: 0 }; // 与 front 视角相同
+				const coverView = { name: 'cover', azim: currentAzim, elev: currentElev }; // 与 front 视角相同，使用当前视角
 
 				// 进入离屏渲染模式
 				scene.camera.startOffscreenMode(coverWidth, coverHeight);

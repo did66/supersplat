@@ -266,7 +266,7 @@ class ScenePanel extends Container {
 
 		const sizeXInput = new NumericInput({
 			class: 'print-size-input',
-			precision: 2,
+			precision: 1,
 			value: null,
 			enabled: false,
 			placeholder: 'PX'
@@ -274,7 +274,7 @@ class ScenePanel extends Container {
 
 		const sizeYInput = new NumericInput({
 			class: 'print-size-input',
-			precision: 2,
+			precision: 1,
 			value: null,
 			enabled: false,
 			placeholder: 'PY'
@@ -282,7 +282,7 @@ class ScenePanel extends Container {
 
 		const sizeZInput = new NumericInput({
 			class: 'print-size-input',
-			precision: 2,
+			precision: 1,
 			value: null,
 			enabled: false,
 			placeholder: 'PZ'
