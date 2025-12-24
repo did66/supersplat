@@ -439,7 +439,7 @@ const registerRenderEvents = (scene: Scene, events: Events) => {
 				});
 
 				// 同时下载文件（保持原有功能）
-				// downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
+				downloadFile(arrayBuffer, `${modelName}-${view.name}.png`);
 
 				// 11. 结束离屏模式
 				scene.camera.endOffscreenMode();
