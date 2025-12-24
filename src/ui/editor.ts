@@ -141,7 +141,7 @@ class EditorUI {
 		}
 		// canvasContainer.append(rightToolbar);
 		// canvasContainer.append(modeToggle);
-		canvasContainer.append(menu);
+		// canvasContainer.append(menu);
 
 		// view axes container
 		const viewCube = new ViewCube(events);
