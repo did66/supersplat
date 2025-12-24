@@ -9,7 +9,7 @@ import cropSvg from './svg/crop.svg';
 import eyedropperSvg from './svg/select-eyedropper.svg';
 import floodSvg from './svg/flood.svg';
 import lassoSvg from './svg/lasso.svg';
-import pickerSvg from './svg/picker.svg';
+import pickerSvg from './svg/picker2.svg';
 import polygonSvg from './svg/polygon.svg';
 import publishSvg from './svg/publish.svg';
 import redoSvg from './svg/redo.svg';
