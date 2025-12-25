@@ -232,6 +232,15 @@ class ScenePanel extends Container {
 			transformArrow.style.transform = transformExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
 		});
 
+		// 当点击 translate/rotate/scale 按钮时，如果 transform panel 是收起状态，则展开它
+		events.on('tool.activated', (toolName: string) => {
+			if ((toolName === 'move' || toolName === 'rotate' || toolName === 'scale') && !transformExpanded) {
+				transformExpanded = true;
+				transformPanelBox.hidden = false;
+				transformArrow.style.transform = 'rotate(0deg)';
+			}
+		});
+
 		transformBox.append(titleTransformBox);
 		transformBox.append(transformPanelBox);
 
