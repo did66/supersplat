@@ -31,12 +31,14 @@ const cacheUrls = [
 self.addEventListener('install', (event) => {
     console.log(`installing v${appVersion}`);
 
-    // create cache for current version
+    // precache should not block install if CacheStorage fails
     event.waitUntil(
         caches.open(cacheName)
-        .then((cache) => {
-            cache.addAll(cacheUrls);
+        .then(cache => cache.addAll(cacheUrls))
+        .catch((err: unknown): void => {
+            console.warn('SW precache failed', err);
         })
+        .then(() => { })
     );
 });
 
@@ -53,9 +55,29 @@ self.addEventListener('activate', () => {
     });
 });
 
+function isDocumentRequest(request: Request): boolean {
+    const url = new URL(request.url);
+    return request.mode === 'navigate' || (url.pathname === '/' || url.pathname.endsWith('/index.html'));
+}
+
+// Entry assets can change between local builds even if package.json version is unchanged.
+// Prefer network-first to avoid serving stale index.js/index.css from the same cache key.
+function isEntryAssetRequest(request: Request): boolean {
+    const url = new URL(request.url);
+    return url.pathname.endsWith('/index.js') || url.pathname.endsWith('/index.css');
+}
+
 self.addEventListener('fetch', (event) => {
+    const request = event.request;
+    if (isDocumentRequest(request) || isEntryAssetRequest(request)) {
+        event.respondWith(
+            fetch(request)
+            .then(response => response)
+            .catch(() => caches.match(request))
+        );
+        return;
+    }
     event.respondWith(
-        caches.match(event.request)
-        .then(response => response ?? fetch(event.request))
+        caches.match(request).then(response => response ?? fetch(request))
     );
 });
