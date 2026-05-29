@@ -30,6 +30,7 @@ const vecb = new Vec3();
 const configuredUnifiedMaterials = new WeakSet<object>();
 const configuredUnifiedMaterialSystems = new WeakSet<object>();
 const UNIFIED_STATE_STREAM = 'pcSplatState';
+const RING_MODE_EDGE_SIZE = 0.04;
 let unifiedOutlineMode = 0;
 let unifiedRingSize = 0;
 
@@ -471,8 +472,9 @@ class Splat extends Element {
         // configure rings rendering
         const material = this.entity.gsplat.instance.material;
         const outlineMode = events.invoke('view.outlineSelection') ? 1 : 0;
-        const ringSize = (selected && cameraOverlay && cameraMode === 'rings') ? 0.04 : 0;
+        const ringSize = (cameraOverlay && cameraMode === 'rings') ? RING_MODE_EDGE_SIZE : 0;
         material.setParameter('outlineMode', outlineMode);
+        material.setParameter('mode', cameraMode === 'rings' ? 1 : 0);
         material.setParameter('ringSize', ringSize);
         unifiedOutlineMode = outlineMode;
         unifiedRingSize = ringSize;
@@ -489,6 +491,7 @@ class Splat extends Element {
         const selectedClr = events.invoke('selectedClr');
         const unselectedClr = events.invoke('unselectedClr');
         const lockedClr = events.invoke('lockedClr');
+        const selectedAlpha = (!selected || outlineMode !== 0) ? 0 : selectedClr.a * this.selectionAlpha;
 
         if (!selected) {
             material.setParameter('selectedClr', [0, 0, 0, 0]);
@@ -519,7 +522,7 @@ class Splat extends Element {
         renderGsplat.setParameter('splatState', this.stateTexture);
         renderGsplat.setParameter('splatTransform', this.transformTexture);
         renderGsplat.setParameter('transformPalette', this.transformPalette.texture);
-        renderGsplat.setParameter('selectedClr', [selectedClr.r, selectedClr.g, selectedClr.b, selectedClr.a * this.selectionAlpha]);
+        renderGsplat.setParameter('selectedClr', [selectedClr.r, selectedClr.g, selectedClr.b, selectedAlpha]);
         renderGsplat.setParameter('lockedClr', [lockedClr.r, lockedClr.g, lockedClr.b, lockedClr.a]);
         renderGsplat.setParameter('clrOffset', [offset, offset, offset]);
         renderGsplat.setParameter('clrScale', [
