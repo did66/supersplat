@@ -2,7 +2,9 @@ import {
     ADDRESS_CLAMP_TO_EDGE,
     FILTER_NEAREST,
     PIXELFORMAT_R8,
+    PIXELFORMAT_R32U,
     PIXELFORMAT_R16U,
+    WORKBUFFER_UPDATE_ALWAYS,
     Asset,
     BoundingBox,
     Color,
@@ -17,7 +19,7 @@ import {
 
 import { Element, ElementType } from './element';
 import { Serializer } from './serializer';
-import { vertexShader, fragmentShader, gsplatCenter } from './shaders/splat-shader';
+import { vertexShader, fragmentShader, unifiedVertexShader, unifiedFragmentShader, gsplatCenter } from './shaders/splat-shader';
 import { State, SplatState } from './splat-state';
 import { Transform } from './transform';
 import { TransformPalette } from './transform-palette';
@@ -25,6 +27,116 @@ import { TransformPalette } from './transform-palette';
 const vec = new Vec3();
 const veca = new Vec3();
 const vecb = new Vec3();
+const configuredUnifiedMaterials = new WeakSet<object>();
+const configuredUnifiedMaterialSystems = new WeakSet<object>();
+const UNIFIED_STATE_STREAM = 'pcSplatState';
+let unifiedOutlineMode = 0;
+let unifiedRingSize = 0;
+
+type UnifiedSplatMaterial = {
+    shaderChunks: {
+        glsl: {
+            set: (name: string, value: string) => void;
+        };
+    };
+    setParameter: (name: string, data: unknown) => void;
+    update: () => void;
+};
+
+type UnifiedSplatSystem = {
+    on: (name: string, callback: (material: UnifiedSplatMaterial, camera: unknown, layer: unknown) => void) => void;
+    getMaterial?: (camera: unknown, layer: unknown) => UnifiedSplatMaterial | null;
+};
+
+const syncUnifiedViewParams = (material?: UnifiedSplatMaterial | null) => {
+    if (!material) {
+        return;
+    }
+    material.setParameter('outlineMode', unifiedOutlineMode);
+    material.setParameter('ringSize', unifiedRingSize);
+};
+
+const configureUnifiedMaterial = (material?: UnifiedSplatMaterial | null) => {
+    if (!material) {
+        return;
+    }
+
+    let needsUpdate = false;
+    if (!configuredUnifiedMaterials.has(material)) {
+        material.shaderChunks.glsl.set('gsplatVS', unifiedVertexShader);
+        material.shaderChunks.glsl.set('gsplatPS', unifiedFragmentShader);
+        configuredUnifiedMaterials.add(material);
+        needsUpdate = true;
+    }
+
+    syncUnifiedViewParams(material);
+    if (needsUpdate) {
+        material.update();
+    }
+};
+
+const unifiedWorkBufferModifier = /* glsl*/`
+uniform sampler2D splatState;
+uniform highp usampler2D splatTransform;
+uniform sampler2D transformPalette;
+
+uniform vec4 selectedClr;
+uniform vec4 lockedClr;
+uniform vec3 clrOffset;
+uniform vec4 clrScale;
+uniform float saturation;
+
+vec3 applySaturation(vec3 color) {
+    vec3 grey = vec3(dot(color, vec3(0.299, 0.587, 0.114)));
+    return grey + (color - grey) * saturation;
+}
+
+mat4 readPaletteTransform(uint transformIndex) {
+    int u = int(transformIndex % 512u) * 3;
+    int v = int(transformIndex / 512u);
+
+    mat4 t;
+    t[0] = texelFetch(transformPalette, ivec2(u, v), 0);
+    t[1] = texelFetch(transformPalette, ivec2(u + 1, v), 0);
+    t[2] = texelFetch(transformPalette, ivec2(u + 2, v), 0);
+    t[3] = vec4(0.0, 0.0, 0.0, 1.0);
+
+    return transpose(t);
+}
+
+void modifySplatCenter(inout vec3 center) {
+    uint transformIndex = texelFetch(splatTransform, splat.uv, 0).r;
+    if (transformIndex == 0u) {
+        return;
+    }
+
+    vec4 localCenter = inverse(matrix_model) * vec4(center, 1.0);
+    center = (matrix_model * readPaletteTransform(transformIndex) * localCenter).xyz;
+}
+
+void modifySplatRotationScale(vec3 originalCenter, vec3 modifiedCenter, inout vec4 rotation, inout vec3 scale) {
+}
+
+void modifySplatColor(vec3 center, inout vec4 color) {
+    uint vertexState = uint(texelFetch(splatState, splat.uv, 0).r * 255.0 + 0.5) & 7u;
+    writePcSplatState(uvec4(vertexState, 0u, 0u, 0u));
+
+    if ((vertexState & 4u) != 0u) {
+        color = vec4(0.0);
+        return;
+    }
+
+    color = color * clrScale + vec4(clrOffset, 0.0);
+    color.xyz = applySaturation(color.xyz);
+    color.a = clamp(color.a, 0.0, 1.0);
+
+    if ((vertexState & 2u) != 0u) {
+        color *= lockedClr;
+    } else if ((vertexState & 1u) != 0u) {
+        color.xyz = mix(color.xyz, selectedClr.xyz, selectedClr.a);
+    }
+}
+`;
 
 const boundingPoints =
     [-1, 1].map((x) => {
@@ -47,6 +159,7 @@ class Splat extends Element {
     numLocked = 0;
     numSelected = 0;
     entity: Entity;
+    renderEntity: Entity;
     changedCounter = 0;
     stateTexture: Texture;
     // encapsulates per-splat state mirror (cpu Uint8Array + gpu Texture).
@@ -91,6 +204,14 @@ class Splat extends Element {
         this.entity = new Entity('splatEntitiy');
         this.entity.setLocalRotation(rotation);
         this.entity.addComponent('gsplat', { asset });
+        this.renderEntity = new Entity('splatUnifiedEntity');
+        this.renderEntity.setLocalRotation(rotation);
+        this.renderEntity.addComponent('gsplat', {
+            asset,
+            unified: true,
+            workBufferUpdate: WORKBUFFER_UPDATE_ALWAYS
+        });
+        this.renderEntity.enabled = false;
 
         const instance = this.entity.gsplat.instance;
 
@@ -171,6 +292,7 @@ class Splat extends Element {
 
     destroy() {
         super.destroy();
+        this.renderEntity.destroy();
         this.entity.destroy();
         this.asset.registry.remove(this.asset);
         this.asset.unload();
@@ -281,9 +403,36 @@ class Splat extends Element {
     async add() {
         // add the entity to the scene
         this.scene.contentRoot.addChild(this.entity);
+        this.scene.contentRoot.addChild(this.renderEntity);
+
+        const unifiedMaterial = this.scene.app.scene.gsplat.material as UnifiedSplatMaterial;
+        const unifiedSystem = this.scene.app.systems.gsplat as UnifiedSplatSystem;
+        const unifiedFormat = this.scene.app.scene.gsplat.format;
+        if (!unifiedFormat.getStream(UNIFIED_STATE_STREAM)) {
+            unifiedFormat.addExtraStreams([{
+                name: UNIFIED_STATE_STREAM,
+                format: PIXELFORMAT_R32U
+            }]);
+        }
+
+        configureUnifiedMaterial(unifiedMaterial);
+        if (!configuredUnifiedMaterialSystems.has(unifiedSystem)) {
+            unifiedSystem.on('material:created', (material, _camera, layer) => {
+                if (layer === this.scene.splatLayer) {
+                    configureUnifiedMaterial(material);
+                }
+            });
+            configuredUnifiedMaterialSystems.add(unifiedSystem);
+        }
 
         // assign splat to the dedicated splat layer (rendered by splat camera with MRT)
         this.entity.gsplat.layers = [this.scene.splatLayer.id];
+        this.renderEntity.gsplat.layers = [this.scene.splatLayer.id];
+        this.renderEntity.gsplat.workBufferUpdate = WORKBUFFER_UPDATE_ALWAYS;
+        this.renderEntity.gsplat.setWorkBufferModifier({
+            glsl: unifiedWorkBufferModifier,
+            wgsl: null
+        });
 
         this.scene.events.on('view.bands', this.rebuildMaterial, this);
         this.rebuildMaterial(this.scene.events.invoke('view.bands'));
@@ -296,6 +445,7 @@ class Splat extends Element {
         this.scene.events.off('view.bands', this.rebuildMaterial, this);
 
         this.scene.contentRoot.removeChild(this.entity);
+        this.scene.contentRoot.removeChild(this.renderEntity);
         this.scene.boundDirty = true;
     }
 
@@ -312,11 +462,28 @@ class Splat extends Element {
         const selected = this.scene.camera.renderOverlays && events.invoke('selection') === this;
         const cameraMode = events.invoke('camera.mode');
         const cameraOverlay = events.invoke('camera.overlay');
+        const useUnifiedRender = this.scene.unifiedSplatRender;
+
+        this.renderEntity.setLocalPosition(this.entity.getLocalPosition());
+        this.renderEntity.setLocalRotation(this.entity.getLocalRotation());
+        this.renderEntity.setLocalScale(this.entity.getLocalScale());
 
         // configure rings rendering
         const material = this.entity.gsplat.instance.material;
-        material.setParameter('outlineMode', events.invoke('view.outlineSelection') ? 1 : 0);
-        material.setParameter('ringSize', (selected && cameraOverlay && cameraMode === 'rings') ? 0.04 : 0);
+        const outlineMode = events.invoke('view.outlineSelection') ? 1 : 0;
+        const ringSize = (selected && cameraOverlay && cameraMode === 'rings') ? 0.04 : 0;
+        material.setParameter('outlineMode', outlineMode);
+        material.setParameter('ringSize', ringSize);
+        unifiedOutlineMode = outlineMode;
+        unifiedRingSize = ringSize;
+        syncUnifiedViewParams(this.scene.app.scene.gsplat.material as UnifiedSplatMaterial);
+        const cameraComponent = this.scene.camera.entity.camera as { camera?: unknown };
+        const unifiedRenderMaterial = (this.scene.app.systems.gsplat as UnifiedSplatSystem).getMaterial?.(
+            cameraComponent.camera ?? cameraComponent,
+            this.scene.splatLayer
+        );
+        configureUnifiedMaterial(unifiedRenderMaterial);
+        syncUnifiedViewParams(unifiedRenderMaterial);
 
         // configure colors
         const selectedClr = events.invoke('selectedClr');
@@ -348,6 +515,21 @@ class Splat extends Element {
         material.setParameter('saturation', this.saturation);
         material.setParameter('transformPalette', this.transformPalette.texture);
 
+        const renderGsplat = this.renderEntity.gsplat;
+        renderGsplat.setParameter('splatState', this.stateTexture);
+        renderGsplat.setParameter('splatTransform', this.transformTexture);
+        renderGsplat.setParameter('transformPalette', this.transformPalette.texture);
+        renderGsplat.setParameter('selectedClr', [selectedClr.r, selectedClr.g, selectedClr.b, selectedClr.a * this.selectionAlpha]);
+        renderGsplat.setParameter('lockedClr', [lockedClr.r, lockedClr.g, lockedClr.b, lockedClr.a]);
+        renderGsplat.setParameter('clrOffset', [offset, offset, offset]);
+        renderGsplat.setParameter('clrScale', [
+            scale * this.tintClr.r * (1 + this.temperature),
+            scale * this.tintClr.g,
+            scale * this.tintClr.b * (1 - this.temperature),
+            this.transparency
+        ]);
+        renderGsplat.setParameter('saturation', this.saturation);
+
         if (this.visible && selected) {
             // render bounding box
             if (events.invoke('camera.bound')) {
@@ -366,7 +548,16 @@ class Splat extends Element {
             }
         }
 
-        this.entity.enabled = this.visible;
+        const legacyEnabled = this.visible && !useUnifiedRender;
+        const unifiedEnabled = this.visible && useUnifiedRender;
+        const renderModeChanged = this.entity.enabled !== legacyEnabled || this.renderEntity.enabled !== unifiedEnabled;
+
+        this.entity.enabled = legacyEnabled;
+        this.renderEntity.enabled = unifiedEnabled;
+
+        if (renderModeChanged) {
+            this.scene.forceRender = true;
+        }
     }
 
     focalPoint() {

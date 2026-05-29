@@ -29,6 +29,11 @@ import { Splat } from './splat';
 import { SplatOverlay } from './splat-overlay';
 import { Underlay } from './underlay';
 
+// Render-path switch for content 3DGS.
+// true: visible splats use unified gsplat path.
+// false: keep legacy-only rendering path.
+const USE_UNIFIED_GSPLAT_FOR_ALL_CONTENT_SPLATS = true;
+
 // sort meshInstances by the aabb corner furthest from the camera
 const corner = new Vec3();
 const specialSort = (instances: MeshInstance[], numInstances: number, cameraPos: Vec3, cameraDir: Vec3) => {
@@ -81,6 +86,7 @@ class Scene {
     boundStorage = new BoundingBox();
     boundDirty = true;
     forceRender = false;
+    unifiedSplatRender = false;
 
     lockedRenderMode = false;
     lockedRender = false;
@@ -176,6 +182,13 @@ class Scene {
         this.app.on('update', (deltaTime: number) => this.onUpdate(deltaTime));
         this.app.on('prerender', () => this.onPreRender());
         this.app.on('postrender', () => this.onPostRender());
+
+        this.app.scene.on('gsplat:sorted', () => {
+            if (this.unifiedSplatRender) {
+                this.forceRender = true;
+                this.app.renderNextFrame = true;
+            }
+        });
 
         // force render on device restored
         this.app.graphicsDevice.on('devicerestored', () => {
@@ -319,6 +332,22 @@ class Scene {
         this.elements.forEach(action);
     }
 
+    private isUnifiedSortableSplat(splat: Splat) {
+        return splat.visible;
+    }
+
+    private updateUnifiedSplatRenderMode() {
+        const splats = this.getElementsByType(ElementType.splat) as Splat[];
+        const visibleContentSplats = splats.filter(splat => this.isUnifiedSortableSplat(splat));
+        const next = USE_UNIFIED_GSPLAT_FOR_ALL_CONTENT_SPLATS ?
+            visibleContentSplats.length > 0 :
+            visibleContentSplats.length > 1;
+        if (next !== this.unifiedSplatRender) {
+            this.unifiedSplatRender = next;
+            this.forceRender = true;
+        }
+    }
+
     private onUpdate(deltaTime: number) {
         // allow elements to update
         this.forEachElement(e => e.onUpdate(deltaTime));
@@ -369,6 +398,8 @@ class Scene {
         // update render target size
         this.targetSize.width = Math.ceil(this.app.graphicsDevice.width / this.config.camera.pixelScale);
         this.targetSize.height = Math.ceil(this.app.graphicsDevice.height / this.config.camera.pixelScale);
+
+        this.updateUnifiedSplatRenderMode();
 
         this.forEachElement(e => e.onPreRender());
 

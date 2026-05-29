@@ -216,6 +216,174 @@ void main(void) {
 }
 `;
 
+const unifiedFragmentShader = /* glsl*/`
+varying mediump vec2 gaussianUV;
+varying mediump vec4 gaussianColor;
+varying mediump vec2 gaussianState;
+
+uniform float outlineMode;
+uniform float ringSize;
+
+const float EXP4 = exp(-4.0);
+const float INV_EXP4 = 1.0 / (1.0 - EXP4);
+
+float normExp(float x) {
+    return (exp(x * -4.0) - EXP4) * INV_EXP4;
+}
+
+void main(void) {
+    mediump float A = dot(gaussianUV, gaussianUV);
+
+    if (A > 1.0) {
+        discard;
+    }
+
+    mediump float norm = normExp(A);
+    mediump float alpha = norm * gaussianColor.a;
+    bool ringsMode = gaussianState.y < 0.5 && ringSize > 0.0;
+
+    if (ringsMode) {
+        if (A < 1.0 - ringSize) {
+            alpha = max(0.05, alpha);
+        } else {
+            alpha = 0.6;
+        }
+    } else if (alpha < 1.0 / 255.0) {
+        discard;
+    }
+
+    bool selected = gaussianState.x > 0.5 && gaussianState.y < 0.5;
+
+    if (outlineMode > 0.5) {
+        pcFragColor0 = vec4(gaussianColor.xyz * alpha, alpha);
+        pcFragColor1 = vec4(0.0, 0.0, 0.0, selected ? norm : 0.0);
+    } else if (selected) {
+        pcFragColor0 = vec4(gaussianColor.xyz * alpha * 0.8, alpha);
+        pcFragColor1 = vec4(gaussianColor.xyz * alpha * 0.2, alpha);
+    } else {
+        pcFragColor0 = vec4(gaussianColor.xyz * alpha, alpha);
+        pcFragColor1 = vec4(0.0, 0.0, 0.0, 0.0);
+    }
+}
+`;
+
+const unifiedVertexShader = /* glsl*/`
+#include "gsplatCommonVS"
+
+varying mediump vec2 gaussianUV;
+varying mediump vec4 gaussianColor;
+varying mediump vec2 gaussianState;
+
+uniform float ringSize;
+
+#ifndef DITHER_NONE
+    varying float id;
+#endif
+
+mediump vec4 discardVec = vec4(0.0, 0.0, 2.0, 1.0);
+
+#ifdef PREPASS_PASS
+    varying float vLinearDepth;
+#endif
+
+#if defined(GSPLAT_UNIFIED_ID) && defined(PICK_PASS)
+    flat varying uint vPickId;
+#endif
+
+#ifdef GSPLAT_OVERDRAW
+    uniform sampler2D colorRamp;
+    uniform float colorRampIntensity;
+#endif
+
+void main(void) {
+    SplatSource source;
+    if (!initSource(source)) {
+        gl_Position = discardVec;
+        return;
+    }
+
+    vec3 modelCenter = getCenter();
+    SplatCenter center;
+    center.modelCenterOriginal = modelCenter;
+
+    modifySplatCenter(modelCenter);
+    center.modelCenterModified = modelCenter;
+    if (!initCenter(modelCenter, center)) {
+        gl_Position = discardVec;
+        return;
+    }
+
+    SplatCorner corner;
+    if (!initCorner(source, center, corner)) {
+        gl_Position = discardVec;
+        return;
+    }
+
+    vec4 clr = getColor();
+    #if GSPLAT_AA
+        clr.a *= corner.aaFactor;
+    #endif
+    #if SH_BANDS > 0
+        vec3 dir = normalize(center.view * mat3(center.modelView));
+        vec3 sh[SH_COEFFS];
+        float scale;
+        readSHData(sh, scale);
+        clr.xyz += evalSH(sh, dir) * scale;
+    #endif
+
+    modifySplatColor(modelCenter, clr);
+    uint splatState = loadPcSplatState().r & 7u;
+    if ((splatState & 4u) != 0u) {
+        gl_Position = discardVec;
+        return;
+    }
+
+    if (ringSize <= 0.0) {
+        if (255.0 * clr.w <= 1.0) {
+            gl_Position = discardVec;
+            return;
+        }
+
+        clipCorner(corner, clr.w);
+    }
+
+    #if GSPLAT_2DGS
+        vec3 modelCorner = center.modelCenterModified + corner.offset;
+        gl_Position = matrix_projection * center.modelView * vec4(modelCorner, 1.0);
+    #else
+        gl_Position = center.proj + vec4(corner.offset.xyz, 0);
+    #endif
+
+    gaussianUV = corner.uv;
+
+    gaussianState = vec2(
+        (splatState & 1u) != 0u ? 1.0 : 0.0,
+        (splatState & 2u) != 0u ? 1.0 : 0.0
+    );
+
+    #ifdef GSPLAT_OVERDRAW
+        float t = clamp(modelCenter.y / 20.0, 0.0, 1.0);
+        vec3 rampColor = textureLod(colorRamp, vec2(t, 0.5), 0.0).rgb;
+        clr.a *= (1.0 / 32.0) * colorRampIntensity;
+        gaussianColor = vec4(rampColor, clr.a);
+    #else
+        gaussianColor = vec4(prepareOutputFromGamma(max(clr.xyz, 0.0)), clr.w);
+    #endif
+
+    #ifndef DITHER_NONE
+        id = float(splat.index);
+    #endif
+
+    #ifdef PREPASS_PASS
+        vLinearDepth = -center.view.z;
+    #endif
+
+    #if defined(GSPLAT_UNIFIED_ID) && defined(PICK_PASS)
+        vPickId = loadPcId().r;
+    #endif
+}
+`;
+
 const gsplatCenter = /* glsl*/`
 uniform highp usampler2D splatTransform;        // per-splat index into transform palette
 uniform sampler2D transformPalette;             // palette of transform matrices
@@ -279,4 +447,4 @@ bool initCenter(vec3 modelCenter, inout SplatCenter center) {
 }
 `;
 
-export { vertexShader, fragmentShader, gsplatCenter };
+export { vertexShader, fragmentShader, unifiedVertexShader, unifiedFragmentShader, gsplatCenter };
